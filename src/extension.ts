@@ -1,118 +1,138 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
-import simpleGit from 'simple-git';
-import * as fs from 'fs';
-import * as path from 'path';
-
-
+import * as vscode from "vscode";
+import simpleGit from "simple-git";
+import * as fs from "fs";
+import * as path from "path";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  // Use the console to output diagnostic information (console.log) and errors (console.error)
+  // This line of code will only be executed once when your extension is activated
+  console.log('Congratulations, your extension "CodeAtlas" is now active!');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "CodeAtlas" is now active!');
+  // The command has been defined in the package.json file
+  // Now provide the implementation of the command with registerCommand
+  // The commandId parameter must match the command field in package.json
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
+  const disposable = vscode.commands.registerCommand(
+    "CodeAtlas.helloWorld",
+    () => {
+      // The code you place here will be executed every time your command is executed
+      // Display a message box to the user
+      vscode.window.showInformationMessage("Hello World from CodeAtlas!");
+    }
+  );
 
+  const disposable2 = vscode.commands.registerCommand(
+    "CodeAtlas.getGitLog",
+    async () => {
+      const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
 
+      if (!workspacePath) {
+        vscode.window.showErrorMessage("No workspace is open");
+        return;
+      }
 
-	const disposable = vscode.commands.registerCommand('CodeAtlas.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from CodeAtlas!');
-	});
-	
+      const git = simpleGit({ baseDir: workspacePath });
 
-	const disposable2 = vscode.commands.registerCommand('CodeAtlas.getGitLog',async()=>{
+      try {
+        const log = await git.log();
 
-		const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+        if (!log.all || log.all.length === 0) {
+          vscode.window.showErrorMessage("No Git Commits found");
+          return;
+        }
 
-		if(!workspacePath){
-			vscode.window.showErrorMessage('No workspace is open');
-			return ;
-		}
+        const logDetails: {
+          hash: string;
+          message: string;
+          date: string;
+          author: string;
+          files: string[];
+        }[] = [];
 
-		const git = simpleGit({baseDir:workspacePath});
+        for (const entry of log.all) {
+          const commitHash = entry.hash;
+          const commitDetails = await git.show([commitHash, "--name-only"]);
+          const filesChanged = commitDetails
+            .split("\n")
+            .slice(5)
+            .filter((line) => line.trim() !== "");
 
-		try{
-			const log = await git.log();
+          logDetails.push({
+            hash: commitHash.substring(0, 7),
+            message: entry.message,
+            date: entry.date,
+            author: entry.author_name,
+            files: filesChanged,
+          });
+        }
 
-			if(!log.all || log.all.length===0){
-				vscode.window.showErrorMessage('No Git Commits found');
-				return ;
-			}
-			
-            const logDetails: { hash: string; message: string; date: string; author: string; files: string[] }[] = [];
+        const panel = vscode.window.createWebviewPanel(
+          "gitLogView",
+          "Git Commit Logs",
+          vscode.ViewColumn.One,
+          { enableScripts: true }
+        );
 
+        panel.webview.html = getWebviewContent(logDetails);
 
-			for (const entry of log.all) {
-                const commitHash = entry.hash;
-                const commitDetails = await git.show([commitHash, '--name-only']);
-                const filesChanged = commitDetails.split('\n').slice(5).filter(line => line.trim() !== '');
+        // const logData = logDetails.join('\n');
 
-                logDetails.push({
-                    hash: commitHash.substring(0, 7),
-                    message: entry.message,
-                    date: entry.date,
-                    author: entry.author_name,
-                    files: filesChanged
-                });
-            }
+        // const logData = log.all.map((entry) =>
+        // 	`[${entry.hash.substring(0, 7)}] ${entry.date} - ${entry.message} by ${entry.author_name}`
+        // ).join('\n');
 
-			const panel = vscode.window.createWebviewPanel(
-                'gitLogView',
-                'Git Commit Logs',
-                vscode.ViewColumn.One,
-                { enableScripts: true }
-            );
+        // const logFilePath = path.join(workspacePath, 'git-log.txt');
+        // fs.writeFileSync(logFilePath, logData);
+        // console.log(logData);
 
-			panel.webview.html = getWebviewContent(logDetails);
+        vscode.window.showInformationMessage(
+          "Git Logs saved in the file git-log.txt"
+        );
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to fetch Git Logs.");
+        console.error(err);
+      }
+    }
+  );
 
-
-			// const logData = logDetails.join('\n');
-
-			// const logData = log.all.map((entry) => 
-			// 	`[${entry.hash.substring(0, 7)}] ${entry.date} - ${entry.message} by ${entry.author_name}`
-			// ).join('\n');				
-
-			// const logFilePath = path.join(workspacePath, 'git-log.txt');
-			// fs.writeFileSync(logFilePath, logData);
-			// console.log(logData);
-
-			vscode.window.showInformationMessage('Git Logs saved in the file git-log.txt');
-		}catch(err){
-			vscode.window.showErrorMessage('Failed to fetch Git Logs.');
-			console.error(err);
-		}
-	});
-
-
-
-	context.subscriptions.push(disposable,disposable2);
-	// context.subscriptions.push(dispisable2);
+  context.subscriptions.push(disposable, disposable2);
+  // context.subscriptions.push(dispisable2);
 }
 
-function getWebviewContent(logDetails: { hash: string; message: string; date: string; author: string; files: string[] }[]): string {
-    const logsHtml = logDetails.map(log => `
+function getWebviewContent(
+  logDetails: {
+    hash: string;
+    message: string;
+    date: string;
+    author: string;
+    files: string[];
+  }[]
+): string {
+  const logsHtml = logDetails
+    .map(
+      (log) => `
         <div class="timeline-item">
             <div class="timeline-icon"></div>
             <div class="timeline-content">
                 <h3>${log.message} <span class="hash">(${log.hash})</span></h3>
                 <p>${log.date} by <b>${log.author}</b></p>
-                <button class="toggle-btn" onclick="toggleFiles('${log.hash}')">Show Files</button>
+                <button class="toggle-btn" onclick="toggleFiles('${
+                  log.hash
+                }')">Show Files</button>
                 <ul id="${log.hash}" class="file-list" style="display: none;">
-                    ${log.files.map(file => `<li>${file}</li>`).join('')}
+                    ${log.files.map((file) => `<li>${file}</li>`).join("")}
                 </ul>
             </div>
         </div>
-    `).join('');
+    `
+    )
+    .join("");
 
-    return `
+  return `
         <!DOCTYPE html>
         <html>
         <head>
@@ -196,8 +216,6 @@ function getWebviewContent(logDetails: { hash: string; message: string; date: st
         </html>
     `;
 }
-
-
 
 // This method is called when your extension is deactivated
 export function deactivate() {}

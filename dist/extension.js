@@ -5477,52 +5477,61 @@ var esm_default = gitInstanceFactory;
 // src/extension.ts
 function activate(context) {
   console.log('Congratulations, your extension "CodeAtlas" is now active!');
-  const disposable = vscode.commands.registerCommand("CodeAtlas.helloWorld", () => {
-    vscode.window.showInformationMessage("Hello World from CodeAtlas!");
-  });
-  const disposable2 = vscode.commands.registerCommand("CodeAtlas.getGitLog", async () => {
-    const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-    if (!workspacePath) {
-      vscode.window.showErrorMessage("No workspace is open");
-      return;
+  const disposable = vscode.commands.registerCommand(
+    "CodeAtlas.helloWorld",
+    () => {
+      vscode.window.showInformationMessage("Hello World from CodeAtlas!");
     }
-    const git = esm_default({ baseDir: workspacePath });
-    try {
-      const log = await git.log();
-      if (!log.all || log.all.length === 0) {
-        vscode.window.showErrorMessage("No Git Commits found");
+  );
+  const disposable2 = vscode.commands.registerCommand(
+    "CodeAtlas.getGitLog",
+    async () => {
+      const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+      if (!workspacePath) {
+        vscode.window.showErrorMessage("No workspace is open");
         return;
       }
-      const logDetails = [];
-      for (const entry of log.all) {
-        const commitHash = entry.hash;
-        const commitDetails = await git.show([commitHash, "--name-only"]);
-        const filesChanged = commitDetails.split("\n").slice(5).filter((line) => line.trim() !== "");
-        logDetails.push({
-          hash: commitHash.substring(0, 7),
-          message: entry.message,
-          date: entry.date,
-          author: entry.author_name,
-          files: filesChanged
-        });
+      const git = esm_default({ baseDir: workspacePath });
+      try {
+        const log = await git.log();
+        if (!log.all || log.all.length === 0) {
+          vscode.window.showErrorMessage("No Git Commits found");
+          return;
+        }
+        const logDetails = [];
+        for (const entry of log.all) {
+          const commitHash = entry.hash;
+          const commitDetails = await git.show([commitHash, "--name-only"]);
+          const filesChanged = commitDetails.split("\n").slice(5).filter((line) => line.trim() !== "");
+          logDetails.push({
+            hash: commitHash.substring(0, 7),
+            message: entry.message,
+            date: entry.date,
+            author: entry.author_name,
+            files: filesChanged
+          });
+        }
+        const panel = vscode.window.createWebviewPanel(
+          "gitLogView",
+          "Git Commit Logs",
+          vscode.ViewColumn.One,
+          { enableScripts: true }
+        );
+        panel.webview.html = getWebviewContent(logDetails);
+        vscode.window.showInformationMessage(
+          "Git Logs saved in the file git-log.txt"
+        );
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to fetch Git Logs.");
+        console.error(err);
       }
-      const panel = vscode.window.createWebviewPanel(
-        "gitLogView",
-        "Git Commit Logs",
-        vscode.ViewColumn.One,
-        { enableScripts: true }
-      );
-      panel.webview.html = getWebviewContent(logDetails);
-      vscode.window.showInformationMessage("Git Logs saved in the file git-log.txt");
-    } catch (err) {
-      vscode.window.showErrorMessage("Failed to fetch Git Logs.");
-      console.error(err);
     }
-  });
+  );
   context.subscriptions.push(disposable, disposable2);
 }
 function getWebviewContent(logDetails) {
-  const logsHtml = logDetails.map((log) => `
+  const logsHtml = logDetails.map(
+    (log) => `
         <div class="timeline-item">
             <div class="timeline-icon"></div>
             <div class="timeline-content">
@@ -5534,7 +5543,8 @@ function getWebviewContent(logDetails) {
                 </ul>
             </div>
         </div>
-    `).join("");
+    `
+  ).join("");
   return `
         <!DOCTYPE html>
         <html>
