@@ -20,6 +20,10 @@
       {
         "command": "CodeAtlas.getGitLog",
         "title": "Get Git Log"
+      },
+      {
+        "command": "CodeAtlas.visualizeGit",
+        "title": "visualize Git"
       }
     ]
   },
