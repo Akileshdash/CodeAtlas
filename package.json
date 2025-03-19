@@ -24,7 +24,12 @@
       {
         "command": "CodeAtlas.getEnhancedInsights",
         "title": "Get Enhanced Insights"
+      },
+     {
+        "command": "CodeAtlas.hotspotAnalysis",
+        "title": "CodeAtlas: Hotspot Analysis "
       }
+      
     ]
   },
   "scripts": {

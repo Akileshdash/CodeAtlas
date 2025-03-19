@@ -827,10 +827,10 @@ var require_src2 = __commonJS({
     var fs_1 = require("fs");
     var debug_1 = __importDefault(require_src());
     var log = debug_1.default("@kwsites/file-exists");
-    function check(path2, isFile, isDirectory) {
-      log(`checking %s`, path2);
+    function check(path, isFile, isDirectory) {
+      log(`checking %s`, path);
       try {
-        const stat = fs_1.statSync(path2);
+        const stat = fs_1.statSync(path);
         if (stat.isFile() && isFile) {
           log(`[OK] path represents a file`);
           return true;
@@ -850,8 +850,8 @@ var require_src2 = __commonJS({
         throw e;
       }
     }
-    function exists2(path2, type = exports2.READABLE) {
-      return check(path2, (type & exports2.FILE) > 0, (type & exports2.FOLDER) > 0);
+    function exists2(path, type = exports2.READABLE) {
+      return check(path, (type & exports2.FILE) > 0, (type & exports2.FOLDER) > 0);
     }
     exports2.exists = exists2;
     exports2.FILE = 1;
@@ -995,8 +995,8 @@ function pathspec(...paths) {
   cache.set(key, paths);
   return key;
 }
-function isPathSpec(path2) {
-  return path2 instanceof String && cache.has(path2);
+function isPathSpec(path) {
+  return path instanceof String && cache.has(path);
 }
 function toPaths(pathSpec) {
   return cache.get(pathSpec) || [];
@@ -1082,8 +1082,8 @@ function toLinesWithContent(input = "", trimmed2 = true, separator = "\n") {
 function forEachLineWithContent(input, callback) {
   return toLinesWithContent(input, true).map((line) => callback(line));
 }
-function folderExists(path2) {
-  return (0, import_file_exists.exists)(path2, import_file_exists.FOLDER);
+function folderExists(path) {
+  return (0, import_file_exists.exists)(path, import_file_exists.FOLDER);
 }
 function append(target, item) {
   if (Array.isArray(target)) {
@@ -1474,8 +1474,8 @@ function checkIsRepoRootTask() {
     commands: commands2,
     format: "utf-8",
     onError,
-    parser(path2) {
-      return /^\.(git)?$/.test(path2.trim());
+    parser(path) {
+      return /^\.(git)?$/.test(path.trim());
     }
   };
 }
@@ -1909,11 +1909,11 @@ function parseGrep(grep) {
   const paths = /* @__PURE__ */ new Set();
   const results = {};
   forEachLineWithContent(grep, (input) => {
-    const [path2, line, preview] = input.split(NULL);
-    paths.add(path2);
-    (results[path2] = results[path2] || []).push({
+    const [path, line, preview] = input.split(NULL);
+    paths.add(path);
+    (results[path] = results[path] || []).push({
       line: asNumber(line),
-      path: path2,
+      path,
       preview
     });
   });
@@ -2676,14 +2676,14 @@ var init_hash_object = __esm2({
     init_task();
   }
 });
-function parseInit(bare, path2, text) {
+function parseInit(bare, path, text) {
   const response = String(text).trim();
   let result;
   if (result = initResponseRegex.exec(response)) {
-    return new InitSummary(bare, path2, false, result[1]);
+    return new InitSummary(bare, path, false, result[1]);
   }
   if (result = reInitResponseRegex.exec(response)) {
-    return new InitSummary(bare, path2, true, result[1]);
+    return new InitSummary(bare, path, true, result[1]);
   }
   let gitDir = "";
   const tokens = response.split(" ");
@@ -2694,7 +2694,7 @@ function parseInit(bare, path2, text) {
       break;
     }
   }
-  return new InitSummary(bare, path2, /^re/i.test(response), gitDir);
+  return new InitSummary(bare, path, /^re/i.test(response), gitDir);
 }
 var InitSummary;
 var initResponseRegex;
@@ -2703,9 +2703,9 @@ var init_InitSummary = __esm2({
   "src/lib/responses/InitSummary.ts"() {
     "use strict";
     InitSummary = class {
-      constructor(bare, path2, existing, gitDir) {
+      constructor(bare, path, existing, gitDir) {
         this.bare = bare;
-        this.path = path2;
+        this.path = path;
         this.existing = existing;
         this.gitDir = gitDir;
       }
@@ -2717,7 +2717,7 @@ var init_InitSummary = __esm2({
 function hasBareCommand(command) {
   return command.includes(bareCommand);
 }
-function initTask(bare = false, path2, customArgs) {
+function initTask(bare = false, path, customArgs) {
   const commands2 = ["init", ...customArgs];
   if (bare && !hasBareCommand(commands2)) {
     commands2.splice(1, 0, bareCommand);
@@ -2726,7 +2726,7 @@ function initTask(bare = false, path2, customArgs) {
     commands: commands2,
     format: "utf-8",
     parser(text) {
-      return parseInit(commands2.includes("--bare"), path2, text);
+      return parseInit(commands2.includes("--bare"), path, text);
     }
   };
 }
@@ -3537,12 +3537,12 @@ var init_FileStatusSummary = __esm2({
     "use strict";
     fromPathRegex = /^(.+)\0(.+)$/;
     FileStatusSummary = class {
-      constructor(path2, index, working_dir) {
-        this.path = path2;
+      constructor(path, index, working_dir) {
+        this.path = path;
         this.index = index;
         this.working_dir = working_dir;
         if (index === "R" || working_dir === "R") {
-          const detail = fromPathRegex.exec(path2) || [null, path2, path2];
+          const detail = fromPathRegex.exec(path) || [null, path, path];
           this.from = detail[2] || "";
           this.path = detail[1] || "";
         }
@@ -3573,14 +3573,14 @@ function splitLine(result, lineStr) {
     default:
       return;
   }
-  function data(index, workingDir, path2) {
+  function data(index, workingDir, path) {
     const raw = `${index}${workingDir}`;
     const handler = parsers6.get(raw);
     if (handler) {
-      handler(result, path2);
+      handler(result, path);
     }
     if (raw !== "##" && raw !== "!!") {
-      result.files.push(new FileStatusSummary(path2, index, workingDir));
+      result.files.push(new FileStatusSummary(path, index, workingDir));
     }
   }
 }
@@ -3892,9 +3892,9 @@ var init_simple_git_api = __esm2({
           next
         );
       }
-      hashObject(path2, write) {
+      hashObject(path, write) {
         return this._runTask(
-          hashObjectTask(path2, write === true),
+          hashObjectTask(path, write === true),
           trailingFunctionArgument(arguments)
         );
       }
@@ -4548,8 +4548,8 @@ __export2(sub_module_exports, {
   subModuleTask: () => subModuleTask,
   updateSubModuleTask: () => updateSubModuleTask
 });
-function addSubModuleTask(repo, path2) {
-  return subModuleTask(["add", repo, path2]);
+function addSubModuleTask(repo, path) {
+  return subModuleTask(["add", repo, path]);
 }
 function initSubModuleTask(customArgs) {
   return subModuleTask(["init", ...customArgs]);
@@ -4879,8 +4879,8 @@ var require_git = __commonJS2({
       }
       return this._runTask(straightThroughStringTask2(command, this._trimmed), next);
     };
-    Git2.prototype.submoduleAdd = function(repo, path2, then) {
-      return this._runTask(addSubModuleTask2(repo, path2), trailingFunctionArgument2(arguments));
+    Git2.prototype.submoduleAdd = function(repo, path, then) {
+      return this._runTask(addSubModuleTask2(repo, path), trailingFunctionArgument2(arguments));
     };
     Git2.prototype.submoduleUpdate = function(args, then) {
       return this._runTask(
@@ -5475,7 +5475,6 @@ init_git_response_error();
 var esm_default = gitInstanceFactory;
 
 // src/extension.ts
-var path = __toESM(require("path"));
 function activate(context) {
   console.log('Congratulations, your extension "CodeAtlas" is now active!');
   const disposable = vscode.commands.registerCommand(
@@ -5504,12 +5503,21 @@ function activate(context) {
           const commitHash = entry.hash;
           const commitDetails = await git.show([commitHash, "--name-only"]);
           const filesChanged = commitDetails.split("\n").slice(5).filter((line) => line.trim() !== "");
+          const allFilesOutput = await git.raw([
+            "ls-tree",
+            "-r",
+            "--name-only",
+            commitHash
+          ]);
+          const allFiles = allFilesOutput.split("\n").map((file) => file.trim()).filter((file) => file !== "");
           logDetails.push({
             hash: commitHash.substring(0, 7),
             message: entry.message,
             date: entry.date,
             author: entry.author_name,
-            files: filesChanged
+            files: filesChanged,
+            allFiles
+            // Save all files at that commit
           });
         }
         const panel = vscode.window.createWebviewPanel(
@@ -5520,7 +5528,7 @@ function activate(context) {
         );
         panel.webview.html = getWebviewContent(logDetails);
         vscode.window.showInformationMessage(
-          "Git Logs saved in the file git-log.txt"
+          "Git Logs retrieved successfully!"
         );
       } catch (err) {
         vscode.window.showErrorMessage("Failed to fetch Git Logs.");
@@ -5528,100 +5536,140 @@ function activate(context) {
       }
     }
   );
-  const disposableInsights = vscode.commands.registerCommand("CodeAtlas.getEnhancedInsights", async () => {
-    vscode.window.showInformationMessage("Fetching project insights...1");
-    const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-    if (!workspacePath) {
-      vscode.window.showErrorMessage("No workspace is open");
-      return;
-    }
-    const git = esm_default(workspacePath);
-    const contributors = [];
-    let languages = "";
-    let commitStats = "0";
-    let dailyCommits = {};
-    let firstCommit = "";
-    let latestCommit = "";
-    try {
-      vscode.window.showInformationMessage("Fetching project insights...2");
-      const log = await git.log();
-      if (!log.all || log.all.length === 0) {
-        vscode.window.showErrorMessage("No Git Commits found");
+  const disposableHotspotAnalysis = vscode.commands.registerCommand(
+    "CodeAtlas.hotspotAnalysis",
+    async () => {
+      const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+      if (!workspacePath) {
+        vscode.window.showErrorMessage("No workspace is open");
         return;
       }
-      log.all.forEach((entry) => {
-        const existingContributor = contributors.find((c) => c.name === entry.author_name);
-        if (existingContributor) {
-          existingContributor.count = String(Number(existingContributor.count) + 1);
-        } else {
-          contributors.push({ name: entry.author_name, count: "1" });
+      const git = esm_default({ baseDir: workspacePath });
+      try {
+        const log = await git.log({ "--name-only": null });
+        if (!log.all || log.all.length === 0) {
+          vscode.window.showErrorMessage("No Git Commits found.");
+          return;
         }
-      });
-      vscode.window.showInformationMessage(`\u2705 Contributors fetched: ${contributors.length}`);
-    } catch (err) {
-      vscode.window.showErrorMessage("Failed to fetch contributors.");
-      console.error("Contributors Error:", err);
+        const fileChangeCounts = {};
+        for (const entry of log.all) {
+          const commitHash = entry.hash;
+          try {
+            const commitDetails = await git.show([commitHash, "--stat"]);
+            const filesChanged = commitDetails.split("\n").filter((line) => line.includes("|")).map((line) => line.split("|")[0].trim());
+            filesChanged.forEach((file) => {
+              if (file) {
+                fileChangeCounts[file] = (fileChangeCounts[file] || 0) + 1;
+              }
+            });
+          } catch (error) {
+            console.error(`Failed to process commit ${commitHash}:`, error);
+          }
+        }
+        if (Object.keys(fileChangeCounts).length === 0) {
+          vscode.window.showErrorMessage("No file changes detected.");
+          return;
+        }
+        const panel = vscode.window.createWebviewPanel(
+          "hotspotAnalysis",
+          "Hotspot Analysis",
+          vscode.ViewColumn.One,
+          { enableScripts: true }
+        );
+        panel.webview.html = getHotspotAnalysisHtml(fileChangeCounts);
+      } catch (error) {
+        vscode.window.showErrorMessage("Failed to analyze hotspots.");
+        console.error("Hotspot Analysis Error:", error);
+      }
     }
-    try {
-      const languageRaw = await git.raw(["ls-files"]);
-      const fileExtensions = languageRaw.split("\n").map((file) => path.extname(file).replace(".", "").toUpperCase()).filter((ext) => ext).reduce((acc, ext) => {
-        acc[ext] = (acc[ext] || 0) + 1;
-        return acc;
-      }, {});
-      const totalFiles = Object.values(fileExtensions).reduce((sum, count) => sum + count, 0);
-      languages = Object.entries(fileExtensions).filter(([ext]) => !["HEIC", "JPG", "PNG", "JPEG", "WOFF", "XLSX"].includes(ext)).map(([ext, count]) => {
-        const percentage = (count / totalFiles * 100).toFixed(2);
-        return `${ext}: ${count} (${percentage}%)`;
-      }).sort((a, b) => {
-        const percentA = parseFloat(a.match(/\(([\d.]+)%\)/)[1]);
-        const percentB = parseFloat(b.match(/\(([\d.]+)%\)/)[1]);
-        return percentB - percentA;
-      }).join(", ");
-      vscode.window.showInformationMessage(`\u2705 Languages fetched.`);
-    } catch (err) {
-      vscode.window.showErrorMessage("Failed to fetch languages.");
-      console.error("Languages Error:", err);
-    }
-    try {
-      commitStats = (await git.raw(["rev-list", "--count", "HEAD"])).trim();
-      const commitDates = await git.raw(["log", "--pretty=format:%cd", "--date=short"]);
-      const commitDatesArray = commitDates.split("\n");
-      dailyCommits = commitDatesArray.reduce((acc, date) => {
-        acc[date] = (acc[date] || 0) + 1;
-        return acc;
-      }, {});
-      vscode.window.showInformationMessage(`\u2705 Commit stats fetched.`);
-    } catch (err) {
-      vscode.window.showErrorMessage("Failed to fetch commit statistics.");
-      console.error("Commit Stats Error:", err);
-    }
-    try {
-      firstCommit = (await git.raw(["log", "--reverse", "--pretty=format:%h %cd %s", "--date=short"])).split("\n")[0];
-      latestCommit = (await git.raw(["log", "-1", "--pretty=format:%h %cd %s", "--date=short"])).split("\n")[0];
-      vscode.window.showInformationMessage(`\u2705 Commit history fetched.`);
-    } catch (err) {
-      vscode.window.showErrorMessage("Failed to fetch commit history.");
-      console.error("Commit History Error:", err);
-    }
-    const panel = vscode.window.createWebviewPanel(
-      "projectInsights",
-      "Project Insights",
-      vscode.ViewColumn.One,
-      { enableScripts: true }
-    );
-    panel.webview.html = getWebviewContent2({
-      contributors,
-      languages,
-      commitCount: commitStats,
-      dailyCommits,
-      firstCommit,
-      latestCommit
-    });
-    vscode.window.showInformationMessage("Fetching project insights...4");
-  });
-  context.subscriptions.push(disposable, disposable2, disposableInsights);
+  );
+  context.subscriptions.push(disposable, disposable2, disposableHotspotAnalysis);
+}
+function getHotspotAnalysisHtml(fileChangeCounts) {
+  const sortedFiles = Object.entries(fileChangeCounts).sort((a, b) => b[1] - a[1]);
+  const labels = sortedFiles.map(([file]) => file);
+  const values = sortedFiles.map(([, count]) => count);
+  const listItems = sortedFiles.map(([file, count]) => `<li>${file}: <b>${count} changes</b></li>`).join("");
+  return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Hotspot Analysis</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; padding: 20px; }
+          h1 { color: #00ffcc; text-align: center; }
+          ul { list-style-type: none; padding: 0; margin-top: 20px; }
+          li {
+            background: #1e1e1e;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background 0.3s;
+          }
+          li:hover { background: #292929; }
+          canvas { max-width: 100%; background: #1e1e1e; padding: 10px; border-radius: 8px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <h1>\u{1F525} Hotspot Files (Frequent Changes)</h1>
+        <canvas id="hotspotChart"></canvas>
+        <ul>${listItems}</ul>
+        
+        <script>
+          const ctx = document.getElementById('hotspotChart').getContext('2d');
+  
+          const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, 'rgba(0, 255, 204, 0.8)');
+          gradient.addColorStop(1, 'rgba(0, 102, 204, 0.6)');
+  
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ${JSON.stringify(labels)},
+              datasets: [{
+                label: 'File Change Frequency',
+                data: ${JSON.stringify(values)},
+                backgroundColor: gradient,
+                borderColor: '#00ffcc',
+                borderWidth: 3,  // Increased line width
+                hoverBackgroundColor: '#ffcc00',  // Change color on hover
+                hoverBorderColor: '#ff6600',  // Border color on hover
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              scales: {
+                x: {
+                  ticks: { color: '#ffffff' },
+                  grid: { color: '#444444' },
+                  beginAtZero: true
+                },
+                y: {
+                  ticks: { color: '#ffffff' },
+                  grid: { color: '#444444' }
+                }
+              },
+              plugins: {
+                legend: { labels: { color: '#ffffff' } }
+              },
+              elements: {
+                bar: {
+                  borderWidth: 3,  // Make bars thicker
+                  hoverBorderWidth: 5  // Thicker on hover
+                }
+              }
+            }
+          });
+        </script>
+      </body>
+      </html>
+    `;
 }
 function getWebviewContent(logDetails) {
+  console.log("Commit Log Details:", JSON.stringify(logDetails, null, 2));
   const logsHtml = logDetails.map(
     (log) => `
         <div class="timeline-item">
@@ -5629,9 +5677,17 @@ function getWebviewContent(logDetails) {
             <div class="timeline-content">
                 <h3>${log.message} <span class="hash">(${log.hash})</span></h3>
                 <p>${log.date} by <b>${log.author}</b></p>
-                <button class="toggle-btn" onclick="toggleFiles('${log.hash}')">Show Files</button>
-                <ul id="${log.hash}" class="file-list" style="display: none;">
-                    ${log.files.map((file) => `<li>${file}</li>`).join("")}
+
+                <!-- Show Changed Files Button -->
+                <button class="toggle-btn" onclick="toggleFiles('${log.hash}-changed')">Show Changed Files</button>
+                <ul id="${log.hash}-changed" class="file-list" style="display: none;">
+                    ${log.files.length > 0 ? log.files.map((file) => `<li>${file}</li>`).join("") : "<li>No changed files</li>"}
+                </ul>
+
+                <!-- Show All Files Button -->
+                <button class="toggle-btn" onclick="toggleFiles('${log.hash}-all')">Show All Files</button>
+                <ul id="${log.hash}-all" class="file-list" style="display: none;">
+                    ${log.allFiles.length > 0 ? log.allFiles.map((file) => `<li>${file}</li>`).join("") : "<li>No files in this commit</li>"}
                 </ul>
             </div>
         </div>
@@ -5642,66 +5698,13 @@ function getWebviewContent(logDetails) {
         <html>
         <head>
             <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    padding: 20px; 
-                    background-color: black;
-                }
-                .timeline {
-                    position: relative;
-                    margin: 0 auto;
-                    padding: 20px;
-                    max-width: 800px;
-                }
-                .timeline-item {
-                    position: relative;
-                    margin-bottom: 20px;
-                    padding-left: 30px;
-                }
-                .timeline-item::before {
-                    content: '';
-                    position: absolute;
-                    left: 7px;
-                    top: 0;
-                    width: 4px;
-                    height: 100%;
-                    background:rgb(38, 166, 252);
-                }
-                .timeline-icon {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 15px;
-                    height: 15px;
-                    background-color: #007acc;
-                    border: 3px solid #ffffff;
-                    border-radius: 50%;
-                    z-index: 1;
-                }
-                .timeline-content {
-                    background:rgb(36, 36, 36);
-                    border-radius: 6px;
-                    padding: 10px 15px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
+                body { font-family: Arial, sans-serif; padding: 20px; background-color: black; color: white; }
+                .timeline { max-width: 800px; margin: 0 auto; padding: 20px; }
+                .timeline-item { margin-bottom: 20px; padding-left: 30px; position: relative; }
+                .timeline-content { background:rgb(36, 36, 36); border-radius: 6px; padding: 10px 15px; }
                 .hash { color: #007acc; }
-                .file-list { 
-                    margin-top: 5px; 
-                    padding-left: 20px; 
-                    list-style-type: none; 
-                    border-left: 2px solid #007acc;
-                    margin-left: 10px;
-                    padding-left: 10px;
-                }
-                .toggle-btn {
-                    background: #007acc;
-                    color: white;
-                    border: none;
-                    padding: 5px 10px;
-                    cursor: pointer;
-                    border-radius: 4px;
-                    margin-top: 5px;
-                }
+                .file-list { margin-top: 5px; padding-left: 20px; list-style-type: none; border-left: 2px solid #007acc; padding-left: 10px; }
+                .toggle-btn { background: #007acc; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; margin-top: 5px; }
                 .toggle-btn:hover { background: #005f99; }
             </style>
         </head>
@@ -5712,96 +5715,14 @@ function getWebviewContent(logDetails) {
             </div>
 
             <script>
-                function toggleFiles(hash) {
-                    const fileList = document.getElementById(hash);
+                function toggleFiles(id) {
+                    const fileList = document.getElementById(id);
                     fileList.style.display = fileList.style.display === 'none' ? 'block' : 'none';
                 }
             </script>
         </body>
         </html>
     `;
-}
-function getWebviewContent2(data) {
-  const { contributors, languages, commitCount, dailyCommits, firstCommit, latestCommit } = data;
-  const contributorsList = contributors.map((contrib) => `<li>${contrib.name} (${contrib.count} commits)</li>`).join("");
-  const dailyCommitsList = Object.entries(dailyCommits).map(([date, count]) => `<li>${date}: ${count} commits</li>`).join("");
-  console.log(typeof languages);
-  console.log("Raw languages data:", languages);
-  const languageEntries = typeof languages === "string" ? languages.split(",").map((entry) => entry.trim()).filter((entry) => entry.includes(":") && entry.includes("%")) : [];
-  console.log("Parsed Entries:", languageEntries);
-  const languageLabels = languageEntries.map((entry) => entry.split(":")[0].trim());
-  const languageData = languageEntries.map(
-    (entry) => parseFloat(entry.match(/\((.*?)%\)/)?.[1] || "0")
-  );
-  console.log("Labels:", languageLabels);
-  console.log("Data:", languageData);
-  return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-          <meta charset="UTF-8">
-          <title>Project Insights</title>
-          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-          <style>
-              body { font-family: Arial, sans-serif; padding: 15px; background: #121212; color: #ffffff; }
-              h1 { color: #4CAF50; }
-              .insights { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-              .box { background: #222222; padding: 15px; border-radius: 8px; }
-              ul { list-style-type: none; padding: 0; }
-              canvas { max-width: 100%; height: auto; }
-          </style>
-      </head>
-      <body>
-          <h1>\u{1F680} Project Insights</h1>  
-          <div class="insights">
-              <div class="box">
-                  <h2>\u{1F9D1}\u200D\u{1F91D}\u200D\u{1F9D1} Contributors</h2>
-                  <ul>${contributorsList}</ul>
-              </div>
-              <div class="box">
-                  <h2>\u{1F5C2}\uFE0F Languages Used</h2>
-                  <canvas id="languagesChart"></canvas>
-              </div>
-              <div class="box">
-                  <h2>\u{1F4C8} Commit Stats</h2>
-                  <p><b>Total Commits:</b> ${commitCount}</p>
-                  <h3>\u{1F4C5} Daily Commit Frequency</h3>
-                  <ul>${dailyCommitsList}</ul>
-              </div>
-              <div class="box">
-                  <h2>\u{1F4DC} Commit History</h2>
-                  <p><b>First Commit:</b> ${firstCommit}</p>
-                  <p><b>Latest Commit:</b> ${latestCommit}</p>
-              </div>
-          </div>
-
-          <script>
-              const ctx = document.getElementById('languagesChart').getContext('2d');
-              new Chart(ctx, {
-                  type: 'doughnut',
-                  data: {
-                      labels: ${JSON.stringify(languageLabels)},
-                      datasets: [{
-                          label: 'Percentage',
-                          data: ${JSON.stringify(languageData)},
-                          backgroundColor: [
-                              '#4CAF50', '#FFC107', '#03A9F4', '#E91E63', '#9C27B0', '#FF5722', '#673AB7', '#00BCD4', '#8BC34A', '#FF9800'
-                          ],
-                      }]
-                  },
-                  options: {
-                      plugins: {
-                          legend: {
-                              position: 'bottom',
-                              labels: { color: '#ffffff' }
-                          }
-                      }
-                  }
-              });
-          </script>
-      </body>
-      </html>
-  `;
 }
 function deactivate() {
 }
