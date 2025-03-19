@@ -29,68 +29,74 @@ export function activate(context: vscode.ExtensionContext) {
     "CodeAtlas.getGitLog",
     async () => {
       const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-
+  
       if (!workspacePath) {
         vscode.window.showErrorMessage("No workspace is open");
         return;
       }
-
+  
       const git = simpleGit({ baseDir: workspacePath });
-
+  
       try {
         const log = await git.log();
-
+  
         if (!log.all || log.all.length === 0) {
           vscode.window.showErrorMessage("No Git Commits found");
           return;
         }
-
+  
         const logDetails: {
           hash: string;
           message: string;
           date: string;
           author: string;
-          files: string[];
+          files: string[]; // Changed files
+          allFiles: string[]; // All files present in that commit
         }[] = [];
-
+  
         for (const entry of log.all) {
           const commitHash = entry.hash;
+  
+          // Get changed files
           const commitDetails = await git.show([commitHash, "--name-only"]);
           const filesChanged = commitDetails
             .split("\n")
             .slice(5)
             .filter((line) => line.trim() !== "");
-
+  
+          // Get all files at that commit
+          const allFilesOutput = await git.raw([
+            "ls-tree",
+            "-r",
+            "--name-only",
+            commitHash,
+          ]);
+          const allFiles = allFilesOutput
+            .split("\n")
+            .map((file) => file.trim())
+            .filter((file) => file !== "");
+  
           logDetails.push({
             hash: commitHash.substring(0, 7),
             message: entry.message,
             date: entry.date,
             author: entry.author_name,
             files: filesChanged,
+            allFiles: allFiles, // Save all files at that commit
           });
         }
-
+  
         const panel = vscode.window.createWebviewPanel(
           "gitLogView",
           "Git Commit Logs",
           vscode.ViewColumn.One,
           { enableScripts: true }
         );
-
+  
         panel.webview.html = getWebviewContent(logDetails);
-
-        // const logData = logDetails.join('\n');
-
-        // const logData = log.all.map((entry) =>
-        // 	`[${entry.hash.substring(0, 7)}] ${entry.date} - ${entry.message} by ${entry.author_name}`
-        // ).join('\n');
-
-        // const logFilePath = path.join(workspacePath, 'git-log.txt');
-        // fs.writeFileSync(logFilePath, logData);
-        // console.log(logData);
-
+  
         vscode.window.showInformationMessage(
-          "Git Logs saved in the file git-log.txt"
+          "Git Logs retrieved successfully!"
         );
       } catch (err) {
         vscode.window.showErrorMessage("Failed to fetch Git Logs.");
@@ -110,8 +116,10 @@ function getWebviewContent(
     date: string;
     author: string;
     files: string[];
+    allFiles: string[]; // All files at the commit
   }[]
 ): string {
+  console.log("Commit Log Details:", JSON.stringify(logDetails, null, 2));
   const logsHtml = logDetails
     .map(
       (log) => `
@@ -120,11 +128,17 @@ function getWebviewContent(
             <div class="timeline-content">
                 <h3>${log.message} <span class="hash">(${log.hash})</span></h3>
                 <p>${log.date} by <b>${log.author}</b></p>
-                <button class="toggle-btn" onclick="toggleFiles('${
-                  log.hash
-                }')">Show Files</button>
-                <ul id="${log.hash}" class="file-list" style="display: none;">
-                    ${log.files.map((file) => `<li>${file}</li>`).join("")}
+
+                <!-- Show Changed Files Button -->
+                <button class="toggle-btn" onclick="toggleFiles('${log.hash}-changed')">Show Changed Files</button>
+                <ul id="${log.hash}-changed" class="file-list" style="display: none;">
+                    ${log.files.length > 0 ? log.files.map((file) => `<li>${file}</li>`).join("") : "<li>No changed files</li>"}
+                </ul>
+
+                <!-- Show All Files Button -->
+                <button class="toggle-btn" onclick="toggleFiles('${log.hash}-all')">Show All Files</button>
+                <ul id="${log.hash}-all" class="file-list" style="display: none;">
+                    ${log.allFiles.length > 0 ? log.allFiles.map((file) => `<li>${file}</li>`).join("") : "<li>No files in this commit</li>"}
                 </ul>
             </div>
         </div>
@@ -137,66 +151,13 @@ function getWebviewContent(
         <html>
         <head>
             <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    padding: 20px; 
-                    background-color: black;
-                }
-                .timeline {
-                    position: relative;
-                    margin: 0 auto;
-                    padding: 20px;
-                    max-width: 800px;
-                }
-                .timeline-item {
-                    position: relative;
-                    margin-bottom: 20px;
-                    padding-left: 30px;
-                }
-                .timeline-item::before {
-                    content: '';
-                    position: absolute;
-                    left: 7px;
-                    top: 0;
-                    width: 4px;
-                    height: 100%;
-                    background:rgb(38, 166, 252);
-                }
-                .timeline-icon {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 15px;
-                    height: 15px;
-                    background-color: #007acc;
-                    border: 3px solid #ffffff;
-                    border-radius: 50%;
-                    z-index: 1;
-                }
-                .timeline-content {
-                    background:rgb(36, 36, 36);
-                    border-radius: 6px;
-                    padding: 10px 15px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
+                body { font-family: Arial, sans-serif; padding: 20px; background-color: black; color: white; }
+                .timeline { max-width: 800px; margin: 0 auto; padding: 20px; }
+                .timeline-item { margin-bottom: 20px; padding-left: 30px; position: relative; }
+                .timeline-content { background:rgb(36, 36, 36); border-radius: 6px; padding: 10px 15px; }
                 .hash { color: #007acc; }
-                .file-list { 
-                    margin-top: 5px; 
-                    padding-left: 20px; 
-                    list-style-type: none; 
-                    border-left: 2px solid #007acc;
-                    margin-left: 10px;
-                    padding-left: 10px;
-                }
-                .toggle-btn {
-                    background: #007acc;
-                    color: white;
-                    border: none;
-                    padding: 5px 10px;
-                    cursor: pointer;
-                    border-radius: 4px;
-                    margin-top: 5px;
-                }
+                .file-list { margin-top: 5px; padding-left: 20px; list-style-type: none; border-left: 2px solid #007acc; padding-left: 10px; }
+                .toggle-btn { background: #007acc; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; margin-top: 5px; }
                 .toggle-btn:hover { background: #005f99; }
             </style>
         </head>
@@ -207,8 +168,8 @@ function getWebviewContent(
             </div>
 
             <script>
-                function toggleFiles(hash) {
-                    const fileList = document.getElementById(hash);
+                function toggleFiles(id) {
+                    const fileList = document.getElementById(id);
                     fileList.style.display = fileList.style.display === 'none' ? 'block' : 'none';
                 }
             </script>
@@ -216,6 +177,8 @@ function getWebviewContent(
         </html>
     `;
 }
+
+
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
