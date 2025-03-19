@@ -827,10 +827,10 @@ var require_src2 = __commonJS({
     var fs_1 = require("fs");
     var debug_1 = __importDefault(require_src());
     var log = debug_1.default("@kwsites/file-exists");
-    function check(path, isFile, isDirectory) {
-      log(`checking %s`, path);
+    function check(path2, isFile, isDirectory) {
+      log(`checking %s`, path2);
       try {
-        const stat = fs_1.statSync(path);
+        const stat = fs_1.statSync(path2);
         if (stat.isFile() && isFile) {
           log(`[OK] path represents a file`);
           return true;
@@ -850,8 +850,8 @@ var require_src2 = __commonJS({
         throw e;
       }
     }
-    function exists2(path, type = exports2.READABLE) {
-      return check(path, (type & exports2.FILE) > 0, (type & exports2.FOLDER) > 0);
+    function exists2(path2, type = exports2.READABLE) {
+      return check(path2, (type & exports2.FILE) > 0, (type & exports2.FOLDER) > 0);
     }
     exports2.exists = exists2;
     exports2.FILE = 1;
@@ -995,8 +995,8 @@ function pathspec(...paths) {
   cache.set(key, paths);
   return key;
 }
-function isPathSpec(path) {
-  return path instanceof String && cache.has(path);
+function isPathSpec(path2) {
+  return path2 instanceof String && cache.has(path2);
 }
 function toPaths(pathSpec) {
   return cache.get(pathSpec) || [];
@@ -1082,8 +1082,8 @@ function toLinesWithContent(input = "", trimmed2 = true, separator = "\n") {
 function forEachLineWithContent(input, callback) {
   return toLinesWithContent(input, true).map((line) => callback(line));
 }
-function folderExists(path) {
-  return (0, import_file_exists.exists)(path, import_file_exists.FOLDER);
+function folderExists(path2) {
+  return (0, import_file_exists.exists)(path2, import_file_exists.FOLDER);
 }
 function append(target, item) {
   if (Array.isArray(target)) {
@@ -1474,8 +1474,8 @@ function checkIsRepoRootTask() {
     commands: commands2,
     format: "utf-8",
     onError,
-    parser(path) {
-      return /^\.(git)?$/.test(path.trim());
+    parser(path2) {
+      return /^\.(git)?$/.test(path2.trim());
     }
   };
 }
@@ -1909,11 +1909,11 @@ function parseGrep(grep) {
   const paths = /* @__PURE__ */ new Set();
   const results = {};
   forEachLineWithContent(grep, (input) => {
-    const [path, line, preview] = input.split(NULL);
-    paths.add(path);
-    (results[path] = results[path] || []).push({
+    const [path2, line, preview] = input.split(NULL);
+    paths.add(path2);
+    (results[path2] = results[path2] || []).push({
       line: asNumber(line),
-      path,
+      path: path2,
       preview
     });
   });
@@ -2676,14 +2676,14 @@ var init_hash_object = __esm2({
     init_task();
   }
 });
-function parseInit(bare, path, text) {
+function parseInit(bare, path2, text) {
   const response = String(text).trim();
   let result;
   if (result = initResponseRegex.exec(response)) {
-    return new InitSummary(bare, path, false, result[1]);
+    return new InitSummary(bare, path2, false, result[1]);
   }
   if (result = reInitResponseRegex.exec(response)) {
-    return new InitSummary(bare, path, true, result[1]);
+    return new InitSummary(bare, path2, true, result[1]);
   }
   let gitDir = "";
   const tokens = response.split(" ");
@@ -2694,7 +2694,7 @@ function parseInit(bare, path, text) {
       break;
     }
   }
-  return new InitSummary(bare, path, /^re/i.test(response), gitDir);
+  return new InitSummary(bare, path2, /^re/i.test(response), gitDir);
 }
 var InitSummary;
 var initResponseRegex;
@@ -2703,9 +2703,9 @@ var init_InitSummary = __esm2({
   "src/lib/responses/InitSummary.ts"() {
     "use strict";
     InitSummary = class {
-      constructor(bare, path, existing, gitDir) {
+      constructor(bare, path2, existing, gitDir) {
         this.bare = bare;
-        this.path = path;
+        this.path = path2;
         this.existing = existing;
         this.gitDir = gitDir;
       }
@@ -2717,7 +2717,7 @@ var init_InitSummary = __esm2({
 function hasBareCommand(command) {
   return command.includes(bareCommand);
 }
-function initTask(bare = false, path, customArgs) {
+function initTask(bare = false, path2, customArgs) {
   const commands2 = ["init", ...customArgs];
   if (bare && !hasBareCommand(commands2)) {
     commands2.splice(1, 0, bareCommand);
@@ -2726,7 +2726,7 @@ function initTask(bare = false, path, customArgs) {
     commands: commands2,
     format: "utf-8",
     parser(text) {
-      return parseInit(commands2.includes("--bare"), path, text);
+      return parseInit(commands2.includes("--bare"), path2, text);
     }
   };
 }
@@ -3537,12 +3537,12 @@ var init_FileStatusSummary = __esm2({
     "use strict";
     fromPathRegex = /^(.+)\0(.+)$/;
     FileStatusSummary = class {
-      constructor(path, index, working_dir) {
-        this.path = path;
+      constructor(path2, index, working_dir) {
+        this.path = path2;
         this.index = index;
         this.working_dir = working_dir;
         if (index === "R" || working_dir === "R") {
-          const detail = fromPathRegex.exec(path) || [null, path, path];
+          const detail = fromPathRegex.exec(path2) || [null, path2, path2];
           this.from = detail[2] || "";
           this.path = detail[1] || "";
         }
@@ -3573,14 +3573,14 @@ function splitLine(result, lineStr) {
     default:
       return;
   }
-  function data(index, workingDir, path) {
+  function data(index, workingDir, path2) {
     const raw = `${index}${workingDir}`;
     const handler = parsers6.get(raw);
     if (handler) {
-      handler(result, path);
+      handler(result, path2);
     }
     if (raw !== "##" && raw !== "!!") {
-      result.files.push(new FileStatusSummary(path, index, workingDir));
+      result.files.push(new FileStatusSummary(path2, index, workingDir));
     }
   }
 }
@@ -3892,9 +3892,9 @@ var init_simple_git_api = __esm2({
           next
         );
       }
-      hashObject(path, write) {
+      hashObject(path2, write) {
         return this._runTask(
-          hashObjectTask(path, write === true),
+          hashObjectTask(path2, write === true),
           trailingFunctionArgument(arguments)
         );
       }
@@ -4548,8 +4548,8 @@ __export2(sub_module_exports, {
   subModuleTask: () => subModuleTask,
   updateSubModuleTask: () => updateSubModuleTask
 });
-function addSubModuleTask(repo, path) {
-  return subModuleTask(["add", repo, path]);
+function addSubModuleTask(repo, path2) {
+  return subModuleTask(["add", repo, path2]);
 }
 function initSubModuleTask(customArgs) {
   return subModuleTask(["init", ...customArgs]);
@@ -4879,8 +4879,8 @@ var require_git = __commonJS2({
       }
       return this._runTask(straightThroughStringTask2(command, this._trimmed), next);
     };
-    Git2.prototype.submoduleAdd = function(repo, path, then) {
-      return this._runTask(addSubModuleTask2(repo, path), trailingFunctionArgument2(arguments));
+    Git2.prototype.submoduleAdd = function(repo, path2, then) {
+      return this._runTask(addSubModuleTask2(repo, path2), trailingFunctionArgument2(arguments));
     };
     Git2.prototype.submoduleUpdate = function(args, then) {
       return this._runTask(
@@ -5475,6 +5475,7 @@ init_git_response_error();
 var esm_default = gitInstanceFactory;
 
 // src/extension.ts
+var path = __toESM(require("path"));
 function activate(context) {
   console.log('Congratulations, your extension "CodeAtlas" is now active!');
   const disposable = vscode.commands.registerCommand(
@@ -5527,7 +5528,98 @@ function activate(context) {
       }
     }
   );
-  context.subscriptions.push(disposable, disposable2);
+  const disposableInsights = vscode.commands.registerCommand("CodeAtlas.getEnhancedInsights", async () => {
+    vscode.window.showInformationMessage("Fetching project insights...1");
+    const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+    if (!workspacePath) {
+      vscode.window.showErrorMessage("No workspace is open");
+      return;
+    }
+    const git = esm_default(workspacePath);
+    const contributors = [];
+    let languages = "";
+    let commitStats = "0";
+    let dailyCommits = {};
+    let firstCommit = "";
+    let latestCommit = "";
+    try {
+      vscode.window.showInformationMessage("Fetching project insights...2");
+      const log = await git.log();
+      if (!log.all || log.all.length === 0) {
+        vscode.window.showErrorMessage("No Git Commits found");
+        return;
+      }
+      log.all.forEach((entry) => {
+        const existingContributor = contributors.find((c) => c.name === entry.author_name);
+        if (existingContributor) {
+          existingContributor.count = String(Number(existingContributor.count) + 1);
+        } else {
+          contributors.push({ name: entry.author_name, count: "1" });
+        }
+      });
+      vscode.window.showInformationMessage(`\u2705 Contributors fetched: ${contributors.length}`);
+    } catch (err) {
+      vscode.window.showErrorMessage("Failed to fetch contributors.");
+      console.error("Contributors Error:", err);
+    }
+    try {
+      const languageRaw = await git.raw(["ls-files"]);
+      const fileExtensions = languageRaw.split("\n").map((file) => path.extname(file).replace(".", "").toUpperCase()).filter((ext) => ext).reduce((acc, ext) => {
+        acc[ext] = (acc[ext] || 0) + 1;
+        return acc;
+      }, {});
+      const totalFiles = Object.values(fileExtensions).reduce((sum, count) => sum + count, 0);
+      languages = Object.entries(fileExtensions).filter(([ext]) => !["HEIC", "JPG", "PNG", "JPEG", "WOFF", "XLSX"].includes(ext)).map(([ext, count]) => {
+        const percentage = (count / totalFiles * 100).toFixed(2);
+        return `${ext}: ${count} (${percentage}%)`;
+      }).sort((a, b) => {
+        const percentA = parseFloat(a.match(/\(([\d.]+)%\)/)[1]);
+        const percentB = parseFloat(b.match(/\(([\d.]+)%\)/)[1]);
+        return percentB - percentA;
+      }).join(", ");
+      vscode.window.showInformationMessage(`\u2705 Languages fetched.`);
+    } catch (err) {
+      vscode.window.showErrorMessage("Failed to fetch languages.");
+      console.error("Languages Error:", err);
+    }
+    try {
+      commitStats = (await git.raw(["rev-list", "--count", "HEAD"])).trim();
+      const commitDates = await git.raw(["log", "--pretty=format:%cd", "--date=short"]);
+      const commitDatesArray = commitDates.split("\n");
+      dailyCommits = commitDatesArray.reduce((acc, date) => {
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {});
+      vscode.window.showInformationMessage(`\u2705 Commit stats fetched.`);
+    } catch (err) {
+      vscode.window.showErrorMessage("Failed to fetch commit statistics.");
+      console.error("Commit Stats Error:", err);
+    }
+    try {
+      firstCommit = (await git.raw(["log", "--reverse", "--pretty=format:%h %cd %s", "--date=short"])).split("\n")[0];
+      latestCommit = (await git.raw(["log", "-1", "--pretty=format:%h %cd %s", "--date=short"])).split("\n")[0];
+      vscode.window.showInformationMessage(`\u2705 Commit history fetched.`);
+    } catch (err) {
+      vscode.window.showErrorMessage("Failed to fetch commit history.");
+      console.error("Commit History Error:", err);
+    }
+    const panel = vscode.window.createWebviewPanel(
+      "projectInsights",
+      "Project Insights",
+      vscode.ViewColumn.One,
+      { enableScripts: true }
+    );
+    panel.webview.html = getWebviewContent2({
+      contributors,
+      languages,
+      commitCount: commitStats,
+      dailyCommits,
+      firstCommit,
+      latestCommit
+    });
+    vscode.window.showInformationMessage("Fetching project insights...4");
+  });
+  context.subscriptions.push(disposable, disposable2, disposableInsights);
 }
 function getWebviewContent(logDetails) {
   const logsHtml = logDetails.map(
@@ -5628,6 +5720,88 @@ function getWebviewContent(logDetails) {
         </body>
         </html>
     `;
+}
+function getWebviewContent2(data) {
+  const { contributors, languages, commitCount, dailyCommits, firstCommit, latestCommit } = data;
+  const contributorsList = contributors.map((contrib) => `<li>${contrib.name} (${contrib.count} commits)</li>`).join("");
+  const dailyCommitsList = Object.entries(dailyCommits).map(([date, count]) => `<li>${date}: ${count} commits</li>`).join("");
+  console.log(typeof languages);
+  console.log("Raw languages data:", languages);
+  const languageEntries = typeof languages === "string" ? languages.split(",").map((entry) => entry.trim()).filter((entry) => entry.includes(":") && entry.includes("%")) : [];
+  console.log("Parsed Entries:", languageEntries);
+  const languageLabels = languageEntries.map((entry) => entry.split(":")[0].trim());
+  const languageData = languageEntries.map(
+    (entry) => parseFloat(entry.match(/\((.*?)%\)/)?.[1] || "0")
+  );
+  console.log("Labels:", languageLabels);
+  console.log("Data:", languageData);
+  return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <title>Project Insights</title>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <style>
+              body { font-family: Arial, sans-serif; padding: 15px; background: #121212; color: #ffffff; }
+              h1 { color: #4CAF50; }
+              .insights { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+              .box { background: #222222; padding: 15px; border-radius: 8px; }
+              ul { list-style-type: none; padding: 0; }
+              canvas { max-width: 100%; height: auto; }
+          </style>
+      </head>
+      <body>
+          <h1>\u{1F680} Project Insights</h1>  
+          <div class="insights">
+              <div class="box">
+                  <h2>\u{1F9D1}\u200D\u{1F91D}\u200D\u{1F9D1} Contributors</h2>
+                  <ul>${contributorsList}</ul>
+              </div>
+              <div class="box">
+                  <h2>\u{1F5C2}\uFE0F Languages Used</h2>
+                  <canvas id="languagesChart"></canvas>
+              </div>
+              <div class="box">
+                  <h2>\u{1F4C8} Commit Stats</h2>
+                  <p><b>Total Commits:</b> ${commitCount}</p>
+                  <h3>\u{1F4C5} Daily Commit Frequency</h3>
+                  <ul>${dailyCommitsList}</ul>
+              </div>
+              <div class="box">
+                  <h2>\u{1F4DC} Commit History</h2>
+                  <p><b>First Commit:</b> ${firstCommit}</p>
+                  <p><b>Latest Commit:</b> ${latestCommit}</p>
+              </div>
+          </div>
+
+          <script>
+              const ctx = document.getElementById('languagesChart').getContext('2d');
+              new Chart(ctx, {
+                  type: 'doughnut',
+                  data: {
+                      labels: ${JSON.stringify(languageLabels)},
+                      datasets: [{
+                          label: 'Percentage',
+                          data: ${JSON.stringify(languageData)},
+                          backgroundColor: [
+                              '#4CAF50', '#FFC107', '#03A9F4', '#E91E63', '#9C27B0', '#FF5722', '#673AB7', '#00BCD4', '#8BC34A', '#FF9800'
+                          ],
+                      }]
+                  },
+                  options: {
+                      plugins: {
+                          legend: {
+                              position: 'bottom',
+                              labels: { color: '#ffffff' }
+                          }
+                      }
+                  }
+              });
+          </script>
+      </body>
+      </html>
+  `;
 }
 function deactivate() {
 }

@@ -5,6 +5,13 @@ import simpleGit from "simple-git";
 import * as fs from "fs";
 import * as path from "path";
 
+type Contributor ={
+  count: string;
+  name: string;
+}
+
+
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -99,7 +106,197 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  context.subscriptions.push(disposable, disposable2);
+//   const disposableInsights = vscode.commands.registerCommand('CodeAtlas.getEnhancedInsights', async () => {
+//     vscode.window.showInformationMessage('Fetching project insights...1');
+//     const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+//     if (!workspacePath) {
+//         vscode.window.showErrorMessage('No workspace is open');
+//         return;
+//     }
+
+//     const git = simpleGit(workspacePath);
+
+//     try {
+//         vscode.window.showInformationMessage('Fetching project insights...2');
+//         // Contributors (via git shortlog)
+//         const contributorsRaw = await git.raw(['shortlog', '-sne']);
+//         const contributors: Contributor[] = contributorsRaw
+//           .trim()
+//           .split('\n')
+//           .map((line): Contributor => {
+//               const parts = line.trim().split('\t');
+//               return { count: parts[0].trim(), name: parts[1].trim() };
+//           });
+
+
+//         // Language Stats
+//         const languages = await git.raw(['ls-files']);
+//         const fileExtensions = languages
+//             .split('\n')
+//             .map(file => path.extname(file))
+//             .reduce((acc, ext) => {
+//                 acc[ext] = (acc[ext] || 0) + 1;
+//                 return acc;
+//             }, {} as Record<string, number>);
+
+//         // Commit Frequency
+//         const commitStats = await git.raw(['rev-list', '--count', 'HEAD']);
+//         const commitDates = await git.raw(['log', '--pretty=format:%cd', '--date=short']);
+//         const commitDatesArray = commitDates.split('\n');
+//         const dailyCommits = commitDatesArray.reduce((acc, date) => {
+//             acc[date] = (acc[date] || 0) + 1;
+//             return acc;
+//         }, {} as Record<string, number>);
+
+//         // First & Latest Commit
+//         const firstCommit = await git.raw(['log', '--reverse', '--pretty=format:%h %cd %s', '--date=short']);
+//         const latestCommit = await git.raw(['log', '-1', '--pretty=format:%h %cd %s', '--date=short']);
+
+//         vscode.window.showInformationMessage('Fetching project insights...3');
+//         // Webview Panel
+//         const panel = vscode.window.createWebviewPanel(
+//             'projectInsights',
+//             'Project Insights',
+//             vscode.ViewColumn.One,
+//             { enableScripts: true }
+//         );
+
+//         panel.webview.html = getWebviewContent2({
+//             contributors,
+//             languages: Object.entries(fileExtensions)
+//                 .map(([ext, count]) => `${ext.replace('.', '').toUpperCase()}: ${count}`)
+//                 .join(', '),
+//             commitCount: commitStats.trim(),
+//             dailyCommits,
+//             firstCommit: firstCommit.split('\n')[0],
+//             latestCommit: latestCommit.split('\n')[0],
+//         });
+//     } catch (err) {
+//         vscode.window.showErrorMessage('Failed to fetch project insights.');
+//         console.error(err);
+//     }
+//     vscode.window.showInformationMessage('Fetching project insights...4');
+// });
+ 
+const disposableInsights = vscode.commands.registerCommand('CodeAtlas.getEnhancedInsights', async () => {
+  vscode.window.showInformationMessage('Fetching project insights...1');
+  const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+  if (!workspacePath) {
+      vscode.window.showErrorMessage('No workspace is open');
+      return;
+  }
+
+  const git = simpleGit(workspacePath);
+  const contributors: Contributor[] = [];
+  let languages = "";
+  let commitStats = "0";
+  let dailyCommits: Record<string, number> = {};
+  let firstCommit = "";
+  let latestCommit = "";
+
+  try {
+      vscode.window.showInformationMessage('Fetching project insights...2');
+      const log = await git.log();
+
+      if (!log.all || log.all.length === 0) {
+          vscode.window.showErrorMessage('No Git Commits found');
+          return;
+      }
+
+      log.all.forEach((entry) => {
+          const existingContributor = contributors.find((c) => c.name === entry.author_name);
+          if (existingContributor) {
+              existingContributor.count = String(Number(existingContributor.count) + 1);
+          } else {
+              contributors.push({ name: entry.author_name, count: '1' });
+          }
+      });
+
+      vscode.window.showInformationMessage(`✅ Contributors fetched: ${contributors.length}`);
+  } catch (err) {
+      vscode.window.showErrorMessage('Failed to fetch contributors.');
+      console.error('Contributors Error:', err);
+  }
+
+  try {
+  
+    const languageRaw = await git.raw(['ls-files']);
+    const fileExtensions = languageRaw
+        .split('\n')
+        .map(file => path.extname(file).replace('.', '').toUpperCase())
+        .filter(ext => ext) 
+        .reduce((acc, ext) => {
+            acc[ext] = (acc[ext] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+    const totalFiles = Object.values(fileExtensions).reduce((sum, count) => sum + count, 0);
+
+    languages = Object.entries(fileExtensions)
+        .filter(([ext]) => !['HEIC', 'JPG', 'PNG', 'JPEG', 'WOFF', 'XLSX'].includes(ext)) 
+        .map(([ext, count]) => {
+            const percentage = ((count / totalFiles) * 100).toFixed(2);
+            return `${ext}: ${count} (${percentage}%)`;
+        })
+        .sort((a, b) => {
+            const percentA = parseFloat(a.match(/\(([\d.]+)%\)/)![1]);
+            const percentB = parseFloat(b.match(/\(([\d.]+)%\)/)![1]);
+            return percentB - percentA; // Sort by highest percentage
+        })
+        .join(', ');
+
+      // console.log(languages);
+      vscode.window.showInformationMessage(`✅ Languages fetched.`);
+  } catch (err) {
+      vscode.window.showErrorMessage('Failed to fetch languages.');
+      console.error('Languages Error:', err);
+  }
+
+  try {
+      commitStats = (await git.raw(['rev-list', '--count', 'HEAD'])).trim();
+      const commitDates = await git.raw(['log', '--pretty=format:%cd', '--date=short']);
+      const commitDatesArray = commitDates.split('\n');
+      dailyCommits = commitDatesArray.reduce((acc, date) => {
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
+      }, {} as Record<string, number>);
+      vscode.window.showInformationMessage(`✅ Commit stats fetched.`);
+  } catch (err) {
+      vscode.window.showErrorMessage('Failed to fetch commit statistics.');
+      console.error('Commit Stats Error:', err);
+  }
+
+  try {
+      firstCommit = (await git.raw(['log', '--reverse', '--pretty=format:%h %cd %s', '--date=short'])).split('\n')[0];
+      latestCommit = (await git.raw(['log', '-1', '--pretty=format:%h %cd %s', '--date=short'])).split('\n')[0];
+      vscode.window.showInformationMessage(`✅ Commit history fetched.`);
+  } catch (err) {
+      vscode.window.showErrorMessage('Failed to fetch commit history.');
+      console.error('Commit History Error:', err);
+  }
+
+  const panel = vscode.window.createWebviewPanel(
+      'projectInsights',
+      'Project Insights',
+      vscode.ViewColumn.One,
+      { enableScripts: true }
+  );
+
+  panel.webview.html = getWebviewContent2({
+      contributors,
+      languages,
+      commitCount: commitStats,
+      dailyCommits,
+      firstCommit,
+      latestCommit,
+  });
+
+  vscode.window.showInformationMessage('Fetching project insights...4');
+});
+
+
+
+  context.subscriptions.push(disposable, disposable2, disposableInsights);
   // context.subscriptions.push(dispisable2);
 }
 
@@ -216,6 +413,117 @@ function getWebviewContent(
         </html>
     `;
 }
+
+function getWebviewContent2(data: any) {
+  const { contributors, languages, commitCount, dailyCommits, firstCommit, latestCommit } = data;
+
+  const contributorsList = contributors
+      .map((contrib: Contributor) => `<li>${contrib.name} (${contrib.count} commits)</li>`)
+      .join('');
+
+  const dailyCommitsList = Object.entries(dailyCommits)
+      .map(([date, count]) => `<li>${date}: ${count} commits</li>`)
+      .join('');
+
+  console.log(typeof languages);
+  // const languageEntries = typeof languages === 'string' 
+  // ? languages.split(',').map(entry => entry.trim()) 
+  // : [];
+  
+  // const languageLabels = languageEntries.map(entry => entry.split(':')[0].trim());
+  // const languageData = languageEntries.map(entry => 
+  //     parseFloat(entry.match(/\((.*?)%\)/)?.[1] || '0')
+  // );
+  // const languageLabels = Object.entries(languages).map(([key]) => key.split(':')[0].trim());
+  // const languageData = Object.entries(languages).map(([key]) => parseFloat(key.match(/\((.*?)%\)/)?.[1] || '0'));
+
+  console.log('Raw languages data:', languages);
+
+  const languageEntries: string[] = typeof languages === 'string'
+      ? languages.split(',').map((entry: string) => entry.trim()).filter(entry => entry.includes(':') && entry.includes('%'))
+      : [];
+
+  console.log('Parsed Entries:', languageEntries);
+
+  const languageLabels: string[] = languageEntries.map((entry: string) => entry.split(':')[0].trim());
+  const languageData: number[] = languageEntries.map((entry: string) => 
+      parseFloat(entry.match(/\((.*?)%\)/)?.[1] || '0')
+  );
+
+  console.log('Labels:', languageLabels);
+  console.log('Data:', languageData);
+
+
+  return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+          <meta charset="UTF-8">
+          <title>Project Insights</title>
+          <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+          <style>
+              body { font-family: Arial, sans-serif; padding: 15px; background: #121212; color: #ffffff; }
+              h1 { color: #4CAF50; }
+              .insights { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+              .box { background: #222222; padding: 15px; border-radius: 8px; }
+              ul { list-style-type: none; padding: 0; }
+              canvas { max-width: 100%; height: auto; }
+          </style>
+      </head>
+      <body>
+          <h1>🚀 Project Insights</h1>  
+          <div class="insights">
+              <div class="box">
+                  <h2>🧑‍🤝‍🧑 Contributors</h2>
+                  <ul>${contributorsList}</ul>
+              </div>
+              <div class="box">
+                  <h2>🗂️ Languages Used</h2>
+                  <canvas id="languagesChart"></canvas>
+              </div>
+              <div class="box">
+                  <h2>📈 Commit Stats</h2>
+                  <p><b>Total Commits:</b> ${commitCount}</p>
+                  <h3>📅 Daily Commit Frequency</h3>
+                  <ul>${dailyCommitsList}</ul>
+              </div>
+              <div class="box">
+                  <h2>📜 Commit History</h2>
+                  <p><b>First Commit:</b> ${firstCommit}</p>
+                  <p><b>Latest Commit:</b> ${latestCommit}</p>
+              </div>
+          </div>
+
+          <script>
+              const ctx = document.getElementById('languagesChart').getContext('2d');
+              new Chart(ctx, {
+                  type: 'doughnut',
+                  data: {
+                      labels: ${JSON.stringify(languageLabels)},
+                      datasets: [{
+                          label: 'Percentage',
+                          data: ${JSON.stringify(languageData)},
+                          backgroundColor: [
+                              '#4CAF50', '#FFC107', '#03A9F4', '#E91E63', '#9C27B0', '#FF5722', '#673AB7', '#00BCD4', '#8BC34A', '#FF9800'
+                          ],
+                      }]
+                  },
+                  options: {
+                      plugins: {
+                          legend: {
+                              position: 'bottom',
+                              labels: { color: '#ffffff' }
+                          }
+                      }
+                  }
+              });
+          </script>
+      </body>
+      </html>
+  `;
+}
+
+
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
