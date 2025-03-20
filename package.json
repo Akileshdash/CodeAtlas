@@ -24,6 +24,10 @@
       {
         "command": "CodeAtlas.visualizeGit",
         "title": "visualize Git"
+      },
+      {
+        "command": "CodeAtlas.getIssues",
+        "title": "Git Issues"
       }
     ]
   },
@@ -55,6 +59,7 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@octokit/rest": "^21.1.1",
     "simple-git": "^3.27.0"
   }
 }
