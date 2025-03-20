@@ -23,12 +23,52 @@
       },
       {
         "command": "CodeAtlas.visualizeGit",
-        "title": "visualize Git"
+        "title": "Visualize Git"
       },
       {
         "command": "CodeAtlas.getIssues",
         "title": "Git Issues"
+      },
+      {
+        "command": "CodeAtlas.getEnhancedInsights",
+        "title": "Get Enhanced Insights"
+      },
+      {
+        "command": "CodeAtlas.hotspotAnalysis",
+        "title": "Hotspot Analysis"
       }
+    ],
+     "keybindings": [
+        {
+            "command": "CodeAtlas.helloWorld",
+            "key": "ctrl+shift+h",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "CodeAtlas.getGitLog",
+            "key": "ctrl+shift+g",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "CodeAtlas.visualizeGit",
+            "key": "ctrl+shift+v",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "CodeAtlas.getIssues",
+            "key": "ctrl+shift+i",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "CodeAtlas.getEnhancedInsights",
+            "key": "ctrl+shift+e",
+            "when": "editorTextFocus"
+        },
+        {
+            "command": "CodeAtlas.hotspotAnalysis",
+            "key": "ctrl+shift+a",
+            "when": "editorTextFocus"
+        }
     ]
   },
   "scripts": {
