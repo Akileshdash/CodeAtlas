@@ -6,10 +6,10 @@ import * as fs from "fs";
 import * as path from "path";
 import { Octokit } from "@octokit/rest";
 
-type Contributor ={
+type Contributor = {
   count: string;
   name: string;
-}
+};
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -55,12 +55,13 @@ export function activate(context: vscode.ExtensionContext) {
         const octokit = new Octokit({
           auth: (await session).accessToken,
         });
-        const response = await octokit.rest.issues.listForRepo({
+        const initialResponse = await octokit.rest.issues.listForRepo({
           owner: owner_string,
           repo: repo_string,
+          per_page: 100,
+          page: 1,
+          state: "all",
         });
-        const issues = response.data;
-        // console.log(issues);
 
         const panel = vscode.window.createWebviewPanel(
           "gitGraphView",
@@ -68,7 +69,39 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.ViewColumn.One,
           { enableScripts: true }
         );
-        panel.webview.html = getIssuesWebviewContent(issues);
+        panel.webview.onDidReceiveMessage((message) => {
+          switch (message.command) {
+            case "fetch": {
+              const page = message.page;
+              octokit.rest.issues
+                .listForRepo({
+                  owner: owner_string,
+                  repo: repo_string,
+                  per_page: 100,
+                  page: page,
+                })
+                .then((response) => {
+                  panel.webview.postMessage({
+                    command: "updateIssues",
+                    issues: response.data,
+                    hasNextPage: response.headers.link
+                      ? response.headers.link.includes('rel="next"')
+                      : false,
+                    currentPage: page,
+                  });
+                });
+              break;
+            }
+          }
+        });
+        const hasNextPage = initialResponse.headers.link
+          ? initialResponse.headers.link.includes('rel="next"')
+          : false;
+
+        panel.webview.html = getIssuesWebviewContent(
+          initialResponse.data,
+          hasNextPage
+        );
       } catch (err) {
         vscode.window.showErrorMessage("Failed to fetch Issues.");
         console.error(err);
@@ -262,122 +295,153 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  const disposableInsights = vscode.commands.registerCommand('CodeAtlas.getEnhancedInsights', async () => {
-    vscode.window.showInformationMessage('Fetching project insights...1');
-    const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-    if (!workspacePath) {
-        vscode.window.showErrorMessage('No workspace is open');
+  const disposableInsights = vscode.commands.registerCommand(
+    "CodeAtlas.getEnhancedInsights",
+    async () => {
+      vscode.window.showInformationMessage("Fetching project insights...1");
+      const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
+      if (!workspacePath) {
+        vscode.window.showErrorMessage("No workspace is open");
         return;
-    }
-  
-    const git = simpleGit(workspacePath);
-    const contributors: Contributor[] = [];
-    let languages = "";
-    let commitStats = "0";
-    let dailyCommits: Record<string, number> = {};
-    let firstCommit = "";
-    let latestCommit = "";
-  
-    try {
-        vscode.window.showInformationMessage('Fetching project insights...2');
+      }
+
+      const git = simpleGit(workspacePath);
+      const contributors: Contributor[] = [];
+      let languages = "";
+      let commitStats = "0";
+      let dailyCommits: Record<string, number> = {};
+      let firstCommit = "";
+      let latestCommit = "";
+
+      try {
+        vscode.window.showInformationMessage("Fetching project insights...2");
         const log = await git.log();
-  
+
         if (!log.all || log.all.length === 0) {
-            vscode.window.showErrorMessage('No Git Commits found');
-            return;
+          vscode.window.showErrorMessage("No Git Commits found");
+          return;
         }
-  
+
         log.all.forEach((entry) => {
-            const existingContributor = contributors.find((c) => c.name === entry.author_name);
-            if (existingContributor) {
-                existingContributor.count = String(Number(existingContributor.count) + 1);
-            } else {
-                contributors.push({ name: entry.author_name, count: '1' });
-            }
+          const existingContributor = contributors.find(
+            (c) => c.name === entry.author_name
+          );
+          if (existingContributor) {
+            existingContributor.count = String(
+              Number(existingContributor.count) + 1
+            );
+          } else {
+            contributors.push({ name: entry.author_name, count: "1" });
+          }
         });
-  
-        vscode.window.showInformationMessage(`✅ Contributors fetched: ${contributors.length}`);
-    } catch (err) {
-        vscode.window.showErrorMessage('Failed to fetch contributors.');
-        console.error('Contributors Error:', err);
-    }
-  
-    try {
-    
-      const languageRaw = await git.raw(['ls-files']);
-      const fileExtensions = languageRaw
-          .split('\n')
-          .map(file => path.extname(file).replace('.', '').toUpperCase())
-          .filter(ext => ext) 
+
+        vscode.window.showInformationMessage(
+          `✅ Contributors fetched: ${contributors.length}`
+        );
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to fetch contributors.");
+        console.error("Contributors Error:", err);
+      }
+
+      try {
+        const languageRaw = await git.raw(["ls-files"]);
+        const fileExtensions = languageRaw
+          .split("\n")
+          .map((file) => path.extname(file).replace(".", "").toUpperCase())
+          .filter((ext) => ext)
           .reduce((acc, ext) => {
-              acc[ext] = (acc[ext] || 0) + 1;
-              return acc;
+            acc[ext] = (acc[ext] || 0) + 1;
+            return acc;
           }, {} as Record<string, number>);
-  
-      const totalFiles = Object.values(fileExtensions).reduce((sum, count) => sum + count, 0);
-  
-      languages = Object.entries(fileExtensions)
-          .filter(([ext]) => !['HEIC', 'JPG', 'PNG', 'JPEG', 'WOFF', 'XLSX'].includes(ext)) 
+
+        const totalFiles = Object.values(fileExtensions).reduce(
+          (sum, count) => sum + count,
+          0
+        );
+
+        languages = Object.entries(fileExtensions)
+          .filter(
+            ([ext]) =>
+              !["HEIC", "JPG", "PNG", "JPEG", "WOFF", "XLSX"].includes(ext)
+          )
           .map(([ext, count]) => {
-              const percentage = ((count / totalFiles) * 100).toFixed(2);
-              return `${ext}: ${count} (${percentage}%)`;
+            const percentage = ((count / totalFiles) * 100).toFixed(2);
+            return `${ext}: ${count} (${percentage}%)`;
           })
           .sort((a, b) => {
-              const percentA = parseFloat(a.match(/\(([\d.]+)%\)/)![1]);
-              const percentB = parseFloat(b.match(/\(([\d.]+)%\)/)![1]);
-              return percentB - percentA; // Sort by highest percentage
+            const percentA = parseFloat(a.match(/\(([\d.]+)%\)/)![1]);
+            const percentB = parseFloat(b.match(/\(([\d.]+)%\)/)![1]);
+            return percentB - percentA; // Sort by highest percentage
           })
-          .join(', ');
-  
+          .join(", ");
+
         // console.log(languages);
         vscode.window.showInformationMessage(`✅ Languages fetched.`);
-    } catch (err) {
-        vscode.window.showErrorMessage('Failed to fetch languages.');
-        console.error('Languages Error:', err);
-    }
-  
-    try {
-        commitStats = (await git.raw(['rev-list', '--count', 'HEAD'])).trim();
-        const commitDates = await git.raw(['log', '--pretty=format:%cd', '--date=short']);
-        const commitDatesArray = commitDates.split('\n');
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to fetch languages.");
+        console.error("Languages Error:", err);
+      }
+
+      try {
+        commitStats = (await git.raw(["rev-list", "--count", "HEAD"])).trim();
+        const commitDates = await git.raw([
+          "log",
+          "--pretty=format:%cd",
+          "--date=short",
+        ]);
+        const commitDatesArray = commitDates.split("\n");
         dailyCommits = commitDatesArray.reduce((acc, date) => {
-            acc[date] = (acc[date] || 0) + 1;
-            return acc;
+          acc[date] = (acc[date] || 0) + 1;
+          return acc;
         }, {} as Record<string, number>);
         vscode.window.showInformationMessage(`✅ Commit stats fetched.`);
-    } catch (err) {
-        vscode.window.showErrorMessage('Failed to fetch commit statistics.');
-        console.error('Commit Stats Error:', err);
-    }
-  
-    try {
-        firstCommit = (await git.raw(['log', '--reverse', '--pretty=format:%h %cd %s', '--date=short'])).split('\n')[0];
-        latestCommit = (await git.raw(['log', '-1', '--pretty=format:%h %cd %s', '--date=short'])).split('\n')[0];
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to fetch commit statistics.");
+        console.error("Commit Stats Error:", err);
+      }
+
+      try {
+        firstCommit = (
+          await git.raw([
+            "log",
+            "--reverse",
+            "--pretty=format:%h %cd %s",
+            "--date=short",
+          ])
+        ).split("\n")[0];
+        latestCommit = (
+          await git.raw([
+            "log",
+            "-1",
+            "--pretty=format:%h %cd %s",
+            "--date=short",
+          ])
+        ).split("\n")[0];
         vscode.window.showInformationMessage(`✅ Commit history fetched.`);
-    } catch (err) {
-        vscode.window.showErrorMessage('Failed to fetch commit history.');
-        console.error('Commit History Error:', err);
-    }
-  
-    const panel = vscode.window.createWebviewPanel(
-        'projectInsights',
-        'Project Insights',
+      } catch (err) {
+        vscode.window.showErrorMessage("Failed to fetch commit history.");
+        console.error("Commit History Error:", err);
+      }
+
+      const panel = vscode.window.createWebviewPanel(
+        "projectInsights",
+        "Project Insights",
         vscode.ViewColumn.One,
         { enableScripts: true }
-    );
-  
-    panel.webview.html = getWebviewContentInsights({
+      );
+
+      panel.webview.html = getWebviewContentInsights({
         contributors,
         languages,
         commitCount: commitStats,
         dailyCommits,
         firstCommit,
         latestCommit,
-    });
-  
-    vscode.window.showInformationMessage('Fetching project insights...4');
-  });
+      });
 
+      vscode.window.showInformationMessage("Fetching project insights...4");
+    }
+  );
 
   const disposableHotspotAnalysis = vscode.commands.registerCommand(
     "CodeAtlas.hotspotAnalysis",
@@ -391,7 +455,7 @@ export function activate(context: vscode.ExtensionContext) {
       const git = simpleGit({ baseDir: workspacePath });
 
       try {
-        const log = await git.log({ '--name-only': null }); // Fetch commits with file changes
+        const log = await git.log({ "--name-only": null }); // Fetch commits with file changes
 
         if (!log.all || log.all.length === 0) {
           vscode.window.showErrorMessage("No Git Commits found.");
@@ -416,7 +480,6 @@ export function activate(context: vscode.ExtensionContext) {
                 fileChangeCounts[file] = (fileChangeCounts[file] || 0) + 1;
               }
             });
-
           } catch (error) {
             console.error(`Failed to process commit ${commitHash}:`, error);
           }
@@ -435,7 +498,6 @@ export function activate(context: vscode.ExtensionContext) {
         );
 
         panel.webview.html = getWebviewContentHotspot(fileChangeCounts);
-
       } catch (error) {
         vscode.window.showErrorMessage("Failed to analyze hotspots.");
         console.error("Hotspot Analysis Error:", error);
@@ -443,12 +505,17 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-
-
-  context.subscriptions.push(disposableHelllo, disposableIssues,disposableVisualize,disposableGitLog,disposableInsights,disposableHotspotAnalysis);
+  context.subscriptions.push(
+    disposableHelllo,
+    disposableIssues,
+    disposableVisualize,
+    disposableGitLog,
+    disposableInsights,
+    disposableHotspotAnalysis
+  );
 }
 
-function getIssuesWebviewContent(issues: any[]): string {
+function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
   const issuesHtml = issues
     .map(
       (issue) => `
@@ -467,14 +534,61 @@ function getIssuesWebviewContent(issues: any[]): string {
     <html>
     <head>
       <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #1e1e1e; color: #d4d4d4; }
-        .issue { background-color: #2d2d2d; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
-        h3 { color: #569cd6; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(to right, #000428, #004e92); color: #c9d1d9; }
+        .issue { background: linear-gradient(to right, #001f3f, #003366); border-radius: 6px; padding: 15px; margin-bottom: 10px; }
+        h3 { color: #58a6ff; }
+        .btn-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+        button { background: linear-gradient(to right, #004e92, #000428); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 6px; font-size: 14px; }
+        button:disabled { background: #484f58; cursor: not-allowed; }
       </style>
     </head>
     <body>
       <h1>GitHub Issues</h1>
-      ${issuesHtml}
+      <div id="issuesContainer">
+        ${issuesHtml}
+      </div>
+      <div class="btn-container">
+        <button id="loadPrev" disabled>Previous</button>
+        <button id="loadNext" ${hasNextPage ? "" : "disabled"}>Next</button>
+      </div>
+
+      <script>
+        (function() {
+          const vscode = acquireVsCodeApi();
+          let currentPage = 1;
+
+          document.getElementById("loadNext").addEventListener("click", () => {
+            vscode.postMessage({ command: "fetch", page: currentPage + 1 });
+          });
+
+          document.getElementById("loadPrev").addEventListener("click", () => {
+            vscode.postMessage({ command: "fetch", page: currentPage - 1 });
+          });
+
+          window.addEventListener('message', event => {
+            const message = event.data;
+            switch (message.command) {
+              case 'updateIssues':
+                const issuesContainer = document.getElementById('issuesContainer');
+                issuesContainer.innerHTML = '';
+                message.issues.forEach(issue => {
+                  const issueElement = document.createElement('div');
+                  issueElement.className = 'issue';
+                  issueElement.innerHTML = 
+                      '<h3>#' + issue.number + ': ' + issue.title + '</h3>' +
+                      '<p>State: ' + issue.state + '</p>' +
+                      '<p>Created by: ' + issue.user.login + '</p>' +
+                      '<p>Created at: ' + new Date(issue.created_at).toLocaleString() + '</p>';
+                  issuesContainer.appendChild(issueElement);
+                });
+                document.getElementById("loadNext").disabled = !message.hasNextPage;
+                document.getElementById("loadPrev").disabled = message.currentPage === 1;
+                currentPage = message.currentPage;
+                break;
+            }
+          });
+        })();
+      </script>
     </body>
     </html>
   `;
@@ -705,46 +819,60 @@ function getWebviewContentGitLog(
     `;
 }
 
-
 function getWebviewContentInsights(data: any) {
-  const { contributors, languages, commitCount, dailyCommits, firstCommit, latestCommit } = data;
+  const {
+    contributors,
+    languages,
+    commitCount,
+    dailyCommits,
+    firstCommit,
+    latestCommit,
+  } = data;
 
   const contributorsList = contributors
-      .map((contrib: Contributor) => `<li>${contrib.name} (${contrib.count} commits)</li>`)
-      .join('');
+    .map(
+      (contrib: Contributor) =>
+        `<li>${contrib.name} (${contrib.count} commits)</li>`
+    )
+    .join("");
 
   const dailyCommitsList = Object.entries(dailyCommits)
-      .map(([date, count]) => `<li>${date}: ${count} commits</li>`)
-      .join('');
+    .map(([date, count]) => `<li>${date}: ${count} commits</li>`)
+    .join("");
 
   console.log(typeof languages);
-  // const languageEntries = typeof languages === 'string' 
-  // ? languages.split(',').map(entry => entry.trim()) 
+  // const languageEntries = typeof languages === 'string'
+  // ? languages.split(',').map(entry => entry.trim())
   // : [];
-  
+
   // const languageLabels = languageEntries.map(entry => entry.split(':')[0].trim());
-  // const languageData = languageEntries.map(entry => 
+  // const languageData = languageEntries.map(entry =>
   //     parseFloat(entry.match(/\((.*?)%\)/)?.[1] || '0')
   // );
   // const languageLabels = Object.entries(languages).map(([key]) => key.split(':')[0].trim());
   // const languageData = Object.entries(languages).map(([key]) => parseFloat(key.match(/\((.*?)%\)/)?.[1] || '0'));
 
-  console.log('Raw languages data:', languages);
+  console.log("Raw languages data:", languages);
 
-  const languageEntries: string[] = typeof languages === 'string'
-      ? languages.split(',').map((entry: string) => entry.trim()).filter(entry => entry.includes(':') && entry.includes('%'))
+  const languageEntries: string[] =
+    typeof languages === "string"
+      ? languages
+          .split(",")
+          .map((entry: string) => entry.trim())
+          .filter((entry) => entry.includes(":") && entry.includes("%"))
       : [];
 
-  console.log('Parsed Entries:', languageEntries);
+  console.log("Parsed Entries:", languageEntries);
 
-  const languageLabels: string[] = languageEntries.map((entry: string) => entry.split(':')[0].trim());
-  const languageData: number[] = languageEntries.map((entry: string) => 
-      parseFloat(entry.match(/\((.*?)%\)/)?.[1] || '0')
+  const languageLabels: string[] = languageEntries.map((entry: string) =>
+    entry.split(":")[0].trim()
+  );
+  const languageData: number[] = languageEntries.map((entry: string) =>
+    parseFloat(entry.match(/\((.*?)%\)/)?.[1] || "0")
   );
 
-  console.log('Labels:', languageLabels);
-  console.log('Data:', languageData);
-
+  console.log("Labels:", languageLabels);
+  console.log("Data:", languageData);
 
   return `
       <!DOCTYPE html>
@@ -815,9 +943,12 @@ function getWebviewContentInsights(data: any) {
   `;
 }
 
-
-function getWebviewContentHotspot(fileChangeCounts: Record<string, number>): string {
-  const sortedFiles = Object.entries(fileChangeCounts).sort((a, b) => b[1] - a[1]);
+function getWebviewContentHotspot(
+  fileChangeCounts: Record<string, number>
+): string {
+  const sortedFiles = Object.entries(fileChangeCounts).sort(
+    (a, b) => b[1] - a[1]
+  );
 
   const labels = sortedFiles.map(([file]) => file);
   const values = sortedFiles.map(([, count]) => count);
@@ -904,8 +1035,5 @@ function getWebviewContentHotspot(fileChangeCounts: Record<string, number>): str
     </html>
   `;
 }
-
-
-
 
 export function deactivate() {}
