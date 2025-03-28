@@ -3,6 +3,12 @@ import { Octokit } from "@octokit/rest";
 import { simpleGit } from "simple-git";
 
 export function registerIssues(context: vscode.ExtensionContext) {
+  /**
+   * @params {vscode.ExtensionContext} context - The extension context provided by VSCode.
+   * @returns {void}
+   * @description Registers a command to fetch GitHub issues for the current repository.
+   * The command is registered under the name "CodeAtlas.getIssues".
+   */
   const disposableIssues = vscode.commands.registerCommand(
     "CodeAtlas.getIssues",
     async () => {
@@ -29,10 +35,10 @@ export function registerIssues(context: vscode.ExtensionContext) {
         const owner_string = name_repo.split("/")[0];
         const repo_string = name_repo.split("/")[1].trim();
 
-        vscode.window.showInformationMessage(name_repo);
         const octokit = new Octokit({
           auth: (await session).accessToken,
         });
+
         const initialResponse = await octokit.rest.issues.listForRepo({
           owner: owner_string,
           repo: repo_string,
@@ -47,6 +53,7 @@ export function registerIssues(context: vscode.ExtensionContext) {
           vscode.ViewColumn.One,
           { enableScripts: true }
         );
+
         panel.webview.onDidReceiveMessage((message) => {
           switch (message.command) {
             case "fetch": {
@@ -81,7 +88,7 @@ export function registerIssues(context: vscode.ExtensionContext) {
           hasNextPage
         );
       } catch (err) {
-        vscode.window.showErrorMessage("Failed to fetch Issues.");
+        vscode.window.showErrorMessage("Failed to fetch Issues Data.");
         console.error(err);
       }
     }
@@ -90,6 +97,12 @@ export function registerIssues(context: vscode.ExtensionContext) {
 }
 
 function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
+  /**
+   * @params {any[]} issues - The list of issues to display.
+   * @params {boolean} hasNextPage - Indicates if there are more pages of issues to fetch.
+   * @returns {string} - The HTML content for the webview.
+   * @description Generates the HTML content for the webview that displays GitHub issues.
+   */
   const issuesHtml = issues
     .map(
       (issue) => `
