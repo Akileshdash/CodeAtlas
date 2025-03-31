@@ -46,7 +46,18 @@ export function activate(context: vscode.ExtensionContext) {
         const commits = await getGitHistory(folderUri.fsPath);
         //vscode.window.showInformationMessage(JSON.stringify(tree, null, 2));
         panel.webview.html = getWebviewContent(tree,commits);
+
+        // Handle messages from webview
+        panel.webview.onDidReceiveMessage(async (message) => {
+            if (message.type === 'fetchDiff') {
+                const diff = await getFileDiff(folderUri.fsPath, message.filePath);
+                panel.webview.postMessage({ type: 'fileDiff', diff });
+            }
+        }, undefined, context.subscriptions);
+
     });
+
+    
 
 	context.subscriptions.push(disposable);
 }
@@ -80,9 +91,12 @@ function getWebviewContent(tree: any, commits: any) {
         <html>
         <head>
             <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/vis-network.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.38/diff2html.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.38/diff2html.min.css">
             <style>
                 #mynetwork { width: 100%; height: 500px; border: 1px solid lightgray; }
                 #commitInfo { margin-top: 20px; padding: 10px; border: 1px solid black; }
+                #fileChanges { margin-top: 20px; padding: 10px; border: 1px solid black; }
             </style>
         </head>
         <body>
@@ -96,6 +110,10 @@ function getWebviewContent(tree: any, commits: any) {
                 <h3>Commit History</h3>
                 <ul id="commitList"></ul>
             </div>
+            <div id="fileChanges">
+                <h3>File Changes</h3>
+                <pre id="diffView">Click a file to view changes.</pre>
+            </div>
             <script>
                 var nodes = new vis.DataSet();
                 var edges = new vis.DataSet();
@@ -103,7 +121,7 @@ function getWebviewContent(tree: any, commits: any) {
 
                 function parseTree(node, parentId = null) {
                     let id = Math.random().toString(36).substr(2, 9);
-                    nodes.add({ id, label: node.name, shape: node.type === 'folder' ? 'box' : 'ellipse' });
+                    nodes.add({ id, label: node.name, shape: node.type === 'folder' ? 'box' : 'ellipse', filePath: node.path });
 
                     if (parentId) edges.add({ from: parentId, to: id });
 
@@ -131,9 +149,28 @@ function getWebviewContent(tree: any, commits: any) {
                 document.getElementById("timelineSlider").addEventListener("input", function(event) {
                     let index = event.target.value;
                     document.getElementById("sliderValue").innerText = commits[index].date + " - " + commits[index].message;
-
-                    // TODO: Future step - Update visualization based on commit
                 });
+
+                // Handle file click
+                network.on("click", function (params) {
+                    if (params.nodes.length > 0) {
+                        var nodeId = params.nodes[0];
+                        var node = nodes.get(nodeId);
+                        if (node.shape === 'ellipse') {
+                            vscode.postMessage({ type: 'fetchDiff', filePath: node.filePath });
+                        }
+                    }
+                });
+
+                // Listen for messages from extension
+                window.addEventListener('message', event => {
+                    const message = event.data;
+                    if (message.type === 'fileDiff') {
+                        document.getElementById("diffView").innerHTML = Diff2Html.html(message.diff, { drawFileList: true, outputFormat: 'side-by-side' });
+                    }
+                });
+
+                const vscode = acquireVsCodeApi();
             </script>
         </body>
         </html>
@@ -141,6 +178,16 @@ function getWebviewContent(tree: any, commits: any) {
 }
 
 
+async function getFileDiff(repoPath: string, filePath: string) {
+    const git = simpleGit(repoPath);
+    try {
+        const diff = await git.diff(['HEAD', '--', filePath]);
+        return diff || 'No changes found.';
+    } catch (error) {
+        console.error(error);
+        return 'Error fetching changes.';
+    }
+}
 
 async function getGitHistory(rootPath: string) {
     const git = simpleGit(rootPath);
