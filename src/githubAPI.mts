@@ -103,10 +103,14 @@ function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
    * @returns {string} - The HTML content for the webview.
    * @description Generates the HTML content for the webview that displays GitHub issues.
    */
+  const issuesSerialized = JSON.stringify(issues);
+  const issuesMap = new Map();
+  issues.forEach((issue) => issuesMap.set(issue.number, issue));
+
   const issuesHtml = issues
     .map(
       (issue) => `
-      <div class="issue">
+      <div class="issue" data-issue=${issue.number}>
         <h3>#${issue.number}: ${issue.title}</h3>
         <p>State: ${issue.state}</p>
         <p>Created by: ${issue.user.login}</p>
@@ -124,25 +128,63 @@ function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
           body { font-family: Arial, sans-serif; padding: 20px; background: linear-gradient(to right, #000428, #004e92); color: #c9d1d9; }
           .issue { background: linear-gradient(to right, #001f3f, #003366); border-radius: 6px; padding: 15px; margin-bottom: 10px; }
           h3 { color: #58a6ff; }
+          .issue:hover { background: linear-gradient(to right, #003366, #001f3f); }
           .btn-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
-          button { background: linear-gradient(to right, #004e92, #000428); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 6px; font-size: 14px; }
+          button { background: linear-gradient(to bottom, #004e92, #000428); color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 6px; font-size: 14px; }
           button:disabled { background: #484f58; cursor: not-allowed; }
         </style>
       </head>
       <body>
-        <h1>GitHub Issues</h1>
-        <div id="issuesContainer">
-          ${issuesHtml}
+        <div id="detailView" style="display: none;">
+          <h1 id="issueTitle"></h1>
+          <div id="issueDetails"></div>
+          <button id="backButton">Back</button>
         </div>
-        <div class="btn-container">
-          <button id="loadPrev" disabled>Previous</button>
-          <button id="loadNext" ${hasNextPage ? "" : "disabled"}>Next</button>
+        <div id="listView">
+          <h1>GitHub Issues</h1>
+          <div id="issuesContainer">
+            ${issuesHtml}
+          </div>
+          <div class="btn-container">
+            <button id="loadPrev" disabled>Previous</button>
+            <button id="loadNext" ${hasNextPage ? "" : "disabled"}>Next</button>
+          </div>
         </div>
-  
+        
         <script>
           (function() {
             const vscode = acquireVsCodeApi();
             let currentPage = 1;
+            let issuesMap = new Map();
+            let issues_c = ${issuesSerialized};
+            issues_c.forEach(issue => issuesMap.set(issue.number, JSON.stringify(issue)));
+            console.log('Issues map:', issuesMap);
+
+            function showIssueDetails(issue) {
+              document.getElementById('listView').style.display = 'none';
+              document.getElementById('detailView').style.display = 'block';
+              document.getElementById('issueTitle').innerHTML = '<h3>#' + issue.number + ':' + issue.title+'</h3>';
+              document.getElementById('issueDetails').innerHTML = 
+                  '<p><strong>State: </strong>'+ issue.state +'</p>' +
+                  '<p><strong>Created by: </strong>' + issue.user.login +'</p>' +
+                  '<p><strong>Created at: </strong>' + new Date(issue.created_at).toLocaleString() + '</p>' +
+                  '<p>' + issue.body + '</p>';
+            }
+
+            function attachIssueListeners() {
+              const issueElements = document.querySelectorAll('.issue');
+              console.log('Issue elements:', issueElements);
+              issueElements.forEach((issueElement) => {
+                  issueElement.addEventListener('click', () => {
+                      const issueNumber = Number(issueElement.dataset.issue);
+                      console.log('Issue number:', issueNumber);
+                      const issue = issuesMap.get(issueNumber);
+                      const issueData = JSON.parse(issue);
+                      showIssueDetails(issueData);
+                  });
+              });
+            }
+            attachIssueListeners();
   
             document.getElementById("loadNext").addEventListener("click", () => {
               vscode.postMessage({ command: "fetch", page: currentPage + 1 });
@@ -150,6 +192,11 @@ function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
   
             document.getElementById("loadPrev").addEventListener("click", () => {
               vscode.postMessage({ command: "fetch", page: currentPage - 1 });
+            });
+
+            document.getElementById("backButton").addEventListener("click", () => {
+              document.getElementById('detailView').style.display = 'none';
+              document.getElementById('listView').style.display = 'block';
             });
   
             window.addEventListener('message', event => {
@@ -160,6 +207,7 @@ function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
                   issuesContainer.innerHTML = '';
                   message.issues.forEach(issue => {
                     const issueElement = document.createElement('div');
+                    issueElement.dataset.issue = issue.number;
                     issueElement.className = 'issue';
                     issueElement.innerHTML = 
                         '<h3>#' + issue.number + ': ' + issue.title + '</h3>' +
@@ -171,6 +219,9 @@ function getIssuesWebviewContent(issues: any[], hasNextPage: boolean) {
                   document.getElementById("loadNext").disabled = !message.hasNextPage;
                   document.getElementById("loadPrev").disabled = message.currentPage === 1;
                   currentPage = message.currentPage;
+                  issuesMap.clear();
+                  message.issues.forEach(issue => issuesMap.set(issue.number, JSON.stringify(issue)));
+                  attachIssueListeners();
                   break;
               }
             });
