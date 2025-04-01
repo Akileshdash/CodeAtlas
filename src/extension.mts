@@ -431,7 +431,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function getWebviewContentVisualize(
-  graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[]
+  graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[] 
 ) {
   return `
     <!DOCTYPE html>
@@ -439,107 +439,275 @@ function getWebviewContentVisualize(
     <head>
       <script src="https://d3js.org/d3.v6.min.js"></script>
       <style>
-        body { background: black; color: white; text-align: center; }
-        svg { width: 100%; height: 600px; }
-        button { background: #007acc; color: white; border: none; padding: 10px; margin-top: 10px; cursor: pointer; }
+        body { background: black; color: white; text-align: center; font-family: Arial; }
+        svg { width: 100%; height: 600px; border: 1px solid white; }
+        button { background: #007acc; color: white; border: none; padding: 10px; margin: 5px; cursor: pointer; }
+        text { pointer-events: none; }
       </style>
     </head>
     <body>
       <h2>Git Evolution Graph</h2>
       <svg></svg>
       <br>
+      <button id="zoomIn">Zoom In</button>
+      <button id="zoomOut">Zoom Out</button>
+      <button id="resetCommit">Reset</button>
       <button id="nextCommit">Next Commit</button>
+      <button id="previousCommit">Previous Commit</button>
 
       <script>
         let graphData = ${JSON.stringify(graphData)};
         let index = 0;
-        let svg = d3.select("svg"), width = window.innerWidth, height = 600;
-        let simulation = d3.forceSimulation().force("link", d3.forceLink().id(d => d.id).distance(100))
-                                          .force("charge", d3.forceManyBody().strength(-300))
-                                          .force("center", d3.forceCenter(width / 2, height / 2));
+        let width = window.innerWidth, height = 600;
 
-       function updateGraph(commitData) {
-        d3.select("svg").selectAll("*").remove();
+        let svg = d3.select("svg")
+                    .attr("width", width)
+                    .attr("height", height);
 
-        let groups = {};
-        commitData.nodes.forEach(node => {
-            let pathParts = node.id.split("/");
-            let groupName = pathParts.slice(0, pathParts.length - 1).join("/"); // Get folder path
-            if (!groups[groupName]) {
-                groups[groupName] = [];
-            }
-            groups[groupName].push(node);
-        });
+        let g = svg.append("g"); // Group for zooming
 
-        let groupKeys = Object.keys(groups);
+        let zoom = d3.zoom()
+                     .scaleExtent([0.5, 5]) // Min and max zoom scale
+                     .on("zoom", (event) => g.attr("transform", event.transform));
 
-        // Draw group boundaries
-        groupKeys.forEach(groupName => {
-            let groupNodes = groups[groupName];
-            let x = d3.mean(groupNodes, d => d.x);
-            let y = d3.mean(groupNodes, d => d.y);
-            svg.append("circle")
-                .attr("cx", x)
-                .attr("cy", y)
-                .attr("r", groupNodes.length * 10)
-                .attr("fill", "none")
-                .attr("stroke", "white")
-                .attr("stroke-dasharray", "5,5");
-            
-            svg.append("text")
-                .attr("x", x)
-                .attr("y", y - 20)
-                .text(groupName)
-                .attr("fill", "white")
-                .attr("font-size", "12px")
-                .attr("text-anchor", "middle");
-        });
+        svg.call(zoom); // Enable zoom on SVG
 
-        let link = svg.selectAll(".link")
-            .data(commitData.edges)
-            .enter().append("line")
-            .attr("stroke", "#ccc").attr("stroke-width", 1.5);
+        function buildHierarchy(nodes) {
+          let root = { name: "root", children: [] };
+          let map = { "root": root };
 
-        let node = svg.selectAll(".node")
-            .data(commitData.nodes)
-            .enter().append("circle")
-            .attr("r", 8).attr("fill", "#007acc");
+          nodes.forEach(node => {
+            let parts = node.id.split("/");
+            let filename = parts.pop();
+            let current = root;
 
-        let text = svg.selectAll(".text")
-            .data(commitData.nodes)
-            .enter().append("text")
-            .text(d => d.label)
-            .attr("fill", "white")
-            .attr("font-size", "10px");
+            parts.forEach(part => {
+              if (!map[part]) {
+                let newFolder = { name: part, children: [] };
+                map[part] = newFolder;
+                current.children.push(newFolder);
+              }
+              current = map[part];
+            });
 
-        simulation.nodes(commitData.nodes).on("tick", () => {
-            node.attr("cx", d => d.x).attr("cy", d => d.y);
-            link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-            text.attr("x", d => d.x + 12).attr("y", d => d.y);
-        });
+            current.children.push({ name: filename, size: 1, type: "file" });
+          });
 
-        simulation.force("link").links(commitData.edges);
-        simulation.alpha(1).restart();
-    }
+          return d3.hierarchy(root).sum(d => d.size);
+        }
 
+        function updateGraph(commitData) {
+          g.selectAll("*").remove();
+          
+          let hierarchyData = buildHierarchy(commitData.nodes);
+          let pack = d3.pack().size([width - 100, height - 100]).padding(10);
+          let root = pack(hierarchyData);
+
+          let nodes = g.selectAll("circle")
+                       .data(root.descendants())
+                       .enter().append("circle")
+                       .attr("cx", d => d.x)
+                       .attr("cy", d => d.y)
+                       .attr("r", d => d.r)
+                       .attr("fill", d => d.children ? "none" : "#007acc")
+                       .attr("stroke", "white");
+
+          // Create labels but keep them hidden initially
+          let labels = g.selectAll("text")
+                        .data(root.descendants())
+                        .enter().append("text")
+                        .attr("x", d => d.x)
+                        .attr("y", d => d.y - d.r - 5)
+                        .text(d => d.data.name)
+                        .attr("fill", "white")
+                        .attr("font-size", "12px")
+                        .attr("text-anchor", "middle")
+                        .style("opacity", 0);  // Hide labels initially
+
+          // Show label on hover
+          nodes.on("mouseover", function(event, d) {
+            // Find the corresponding label and show it
+            d3.select(this).style("cursor", "pointer");
+            labels.filter(l => l.data.name === d.data.name)
+                  .transition().duration(200)
+                  .style("opacity", 1);  // Fade in the label
+          });
+
+          // Hide label on mouseout
+          nodes.on("mouseout", function(event, d) {
+            // Hide the label when the mouse leaves
+            labels.filter(l => l.data.name === d.data.name)
+                  .transition().duration(200)
+                  .style("opacity", 0);  // Fade out the label
+          });
+        }
 
         function nextCommit() {
           if (index < graphData.length) {
             updateGraph(graphData[index++]);
-          } else {
-            alert("No more commits!");
           }
         }
 
-        document.getElementById("nextCommit").addEventListener("click", nextCommit);
+        function previousCommit() {
+          if (index >= 0) {
+            updateGraph(graphData[index--]);
+          }
+        }
 
-        // Show the first commit by default
-        nextCommit();
+        function zoomIn() {
+          svg.transition().call(zoom.scaleBy, 1.2);
+        }
+
+        function zoomOut() {
+          svg.transition().call(zoom.scaleBy, 0.8);
+        }
+
+        function resetCommit() {
+          index=0;
+          updateGraph(graphData[index]);
+        }
+
+        document.getElementById("nextCommit").addEventListener("click", nextCommit);
+        document.getElementById("previousCommit").addEventListener("click", previousCommit);
+        document.getElementById("zoomIn").addEventListener("click", zoomIn);
+        document.getElementById("zoomOut").addEventListener("click", zoomOut);
+        document.getElementById("resetCommit").addEventListener("click", resetCommit);
+        
+        nextCommit(); // Show first commit initially
       </script>
     </body>
     </html>`;
 }
+
+
+// function getWebviewContentVisualize(
+//   graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[]
+// ) {
+//   return `
+//     <!DOCTYPE html>
+//     <html>
+//     <head>
+//       <script src="https://d3js.org/d3.v6.min.js"></script>
+//       <style>
+//         body { background: black; color: white; text-align: center; font-family: Arial; }
+//         svg { width: 100%; height: 600px; border: 1px solid white; }
+//         button { background: #007acc; color: white; border: none; padding: 10px; margin: 5px; cursor: pointer; }
+//       </style>
+//     </head>
+//     <body>
+//       <h2>Git Evolution Graph</h2>
+//       <svg></svg>
+//       <br>
+//       <button id="zoomIn">Zoom In</button>
+//       <button id="zoomOut">Zoom Out</button>
+//       <button id="resetCommit">Reset</button>
+//       <button id="nextCommit">Next Commit</button>
+//       <button id="previousCommit">Previous Commit</button>
+
+//       <script>
+//         let graphData = ${JSON.stringify(graphData)};
+//         let index = 0;
+//         let width = window.innerWidth, height = 600;
+
+//         let svg = d3.select("svg")
+//                     .attr("width", width)
+//                     .attr("height", height);
+
+//         let g = svg.append("g"); // Group for zooming
+
+//         let zoom = d3.zoom()
+//                      .scaleExtent([0.5, 5]) // Min and max zoom scale
+//                      .on("zoom", (event) => g.attr("transform", event.transform));
+
+//         svg.call(zoom); // Enable zoom on SVG
+
+//         function buildHierarchy(nodes) {
+//           let root = { name: "root", children: [] };
+//           let map = { "root": root };
+
+//           nodes.forEach(node => {
+//             let parts = node.id.split("/");
+//             let filename = parts.pop();
+//             let current = root;
+
+//             parts.forEach(part => {
+//               if (!map[part]) {
+//                 let newFolder = { name: part, children: [] };
+//                 map[part] = newFolder;
+//                 current.children.push(newFolder);
+//               }
+//               current = map[part];
+//             });
+
+//             current.children.push({ name: filename, size: 1, type: "file" });
+//           });
+
+//           return d3.hierarchy(root).sum(d => d.size);
+//         }
+
+//         function updateGraph(commitData) {
+//           g.selectAll("*").remove();
+          
+//           let hierarchyData = buildHierarchy(commitData.nodes);
+//           let pack = d3.pack().size([width - 100, height - 100]).padding(10);
+//           let root = pack(hierarchyData);
+
+//           let nodes = g.selectAll("circle")
+//                        .data(root.descendants())
+//                        .enter().append("circle")
+//                        .attr("cx", d => d.x)
+//                        .attr("cy", d => d.y)
+//                        .attr("r", d => d.r)
+//                        .attr("fill", d => d.children ? "none" : "#007acc")
+//                        .attr("stroke", "white");
+
+//           let labels = g.selectAll("text")
+//                         .data(root.descendants())
+//                         .enter().append("text")
+//                         .attr("x", d => d.x)
+//                         .attr("y", d => d.y - d.r - 5)
+//                         .text(d => d.data.name)
+//                         .attr("fill", "white")
+//                         .attr("font-size", "12px")
+//                         .attr("text-anchor", "middle");
+//         }
+
+//         function nextCommit() {
+//           if (index < graphData.length) {
+//             updateGraph(graphData[index++]);
+//           }
+//         }
+
+//         function previousCommit() {
+//           if (index >= 0) {
+//             updateGraph(graphData[index--]);
+//           }
+//         }
+
+//         function zoomIn() {
+//           svg.transition().call(zoom.scaleBy, 1.2);
+//         }
+
+//         function zoomOut() {
+//           svg.transition().call(zoom.scaleBy, 0.8);
+//         }
+
+//         function resetCommit() {
+//           index=0;
+//           updateGraph(graphData[index]);
+//         }
+
+//         document.getElementById("nextCommit").addEventListener("click", nextCommit);
+//         document.getElementById("previousCommit").addEventListener("click", previousCommit);
+//         document.getElementById("zoomIn").addEventListener("click", zoomIn);
+//         document.getElementById("zoomOut").addEventListener("click", zoomOut);
+//         document.getElementById("resetCommit").addEventListener("click", resetCommit);
+        
+//         nextCommit(); // Show first commit initially
+//       </script>
+//     </body>
+//     </html>`;
+// }
 
 function getWebviewContentGitLog(
   logDetails: {
@@ -558,9 +726,8 @@ function getWebviewContentGitLog(
             <div class="timeline-content">
                 <h3>${log.message} <span class="hash">(${log.hash})</span></h3>
                 <p>${log.date} by <b>${log.author}</b></p>
-                <button class="toggle-btn" onclick="toggleFiles('${
-                  log.hash
-                }')">Show Files</button>
+                <button class="toggle-btn" onclick="toggleFiles('${log.hash
+        }')">Show Files</button>
                 <ul id="${log.hash}" class="file-list" style="display: none;">
                     ${log.files.map((file) => `<li>${file}</li>`).join("")}
                 </ul>
@@ -693,9 +860,9 @@ function getWebviewContentInsights(data: any) {
   const languageEntries: string[] =
     typeof languages === "string"
       ? languages
-          .split(",")
-          .map((entry: string) => entry.trim())
-          .filter((entry) => entry.includes(":") && entry.includes("%"))
+        .split(",")
+        .map((entry: string) => entry.trim())
+        .filter((entry) => entry.includes(":") && entry.includes("%"))
       : [];
 
   console.log("Parsed Entries:", languageEntries);
@@ -872,4 +1039,4 @@ function getWebviewContentHotspot(
   `;
 }
 
-export function deactivate() {}
+export function deactivate() { }
