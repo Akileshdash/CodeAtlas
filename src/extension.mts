@@ -88,17 +88,6 @@ export function activate(context: vscode.ExtensionContext) {
 
           let edges = [];
 
-          // filesChanged.forEach((file) => {
-          //   if (!fileMap.has(file)){fileMap.set(file, { id: file, label: file });};
-          //   nodes.push(fileMap.get(file));
-          // });
-
-          // for (let i = 0; i < filesChanged.length - 1; i++) {
-          //     for (let j = i + 1; j < filesChanged.length; j++) {
-          //       edges.push({ source: filesChanged[i], target: filesChanged[j] });
-          //     }
-          //   }
-
           allFiles.forEach((file) => {
             if (!fileMap.has(file)) {
               fileMap.set(file, { id: file, label: file });
@@ -114,7 +103,10 @@ export function activate(context: vscode.ExtensionContext) {
 
           graphData.push({
             commit: commitHash,
+            date: entry.date,
+            author: entry.author_name,
             message: entry.message,
+            filesChanged: filesChanged,
             nodes,
             edges,
           });
@@ -431,7 +423,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function getWebviewContentVisualize(
-  graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[] 
+  graphData: { commit: string; message: string; nodes: any[]; edges: any[] ;date: string; author: string; filesChanged: string[];}[] 
 ) {
   return `
     <!DOCTYPE html>
@@ -447,6 +439,11 @@ function getWebviewContentVisualize(
     </head>
     <body>
       <h2>Git Evolution Graph</h2>
+      <div id="commitInfo" style="position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; text-align: left;">
+        <strong>Commit:</strong> <span id="commitId"></span><br>
+        <strong>Author:</strong> <span id="author"></span><br>
+        <strong>Date:</strong> <span id="commitDate"></span>
+      </div>
       <svg></svg>
       <br>
       <button id="zoomIn">Zoom In</button>
@@ -499,6 +496,10 @@ function getWebviewContentVisualize(
         function updateGraph(commitData) {
           g.selectAll("*").remove();
           
+          // Update commit info display
+          document.getElementById("commitId").textContent = commitData.commit;
+          document.getElementById("author").textContent = commitData.author;
+          document.getElementById("commitDate").textContent = commitData.date;
           let hierarchyData = buildHierarchy(commitData.nodes);
           let pack = d3.pack().size([width - 100, height - 100]).padding(10);
           let root = pack(hierarchyData);
