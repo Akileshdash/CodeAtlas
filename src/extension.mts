@@ -442,6 +442,7 @@ function getWebviewContentVisualize(
       <div id="commitInfo" style="position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; text-align: left;">
         <strong>Commit:</strong> <span id="commitId"></span><br>
         <strong>Author:</strong> <span id="author"></span><br>
+        <strong>Commit Message:</strong> <span id="commitMessage"></span><br>
         <strong>Date:</strong> <span id="commitDate"></span>
       </div>
       <svg></svg>
@@ -498,19 +499,36 @@ function getWebviewContentVisualize(
           
           // Update commit info display
           document.getElementById("commitId").textContent = commitData.commit;
+          document.getElementById("commitMessage").textContent = commitData.message;
           document.getElementById("author").textContent = commitData.author;
           document.getElementById("commitDate").textContent = commitData.date;
           let hierarchyData = buildHierarchy(commitData.nodes);
           let pack = d3.pack().size([width - 100, height - 100]).padding(10);
           let root = pack(hierarchyData);
 
+          const filesChangedSet = new Set(commitData.filesChanged); // Fast lookup for changed files
+          const prevFilesChangedSet = new Set(index > 0 ? graphData[index - 1].filesChanged : []); // Previous commit's files
           let nodes = g.selectAll("circle")
                        .data(root.descendants())
                        .enter().append("circle")
                        .attr("cx", d => d.x)
                        .attr("cy", d => d.y)
                        .attr("r", d => d.r)
-                       .attr("fill", d => d.children ? "none" : "#007acc")
+                        .attr("fill", d => {
+                            if (!d.children) { // Only apply to file nodes
+                                let filePath = d.ancestors()
+                                                .map(a => a.data.name)
+                                                .filter(name => name !== "root") // Fix root issue
+                                                .reverse()  // Fix order
+                                                .join("/");
+
+                                if (filesChangedSet.has(filePath)) {
+                                    return prevFilesChangedSet.has(filePath) ? "red" : "green";  // New files in green
+                                }
+                                return "#007acc"; // Default color for unchanged files
+                            }
+                            return "none"; // Keep folders transparent
+                        })
                        .attr("stroke", "white");
 
           // Create labels but keep them hidden initially
@@ -545,13 +563,15 @@ function getWebviewContentVisualize(
 
         function nextCommit() {
           if (index < graphData.length) {
-            updateGraph(graphData[index++]);
+            index++;
+            updateGraph(graphData[index]);
           }
         }
 
         function previousCommit() {
           if (index >= 0) {
-            updateGraph(graphData[index--]);
+            index--;
+            updateGraph(graphData[index]);
           }
         }
 
