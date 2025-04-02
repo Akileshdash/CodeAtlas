@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { simpleGit } from "simple-git";
 import * as path from "path";
 import { registerIssues } from "./githubAPI.mjs";
+import { registerGitBlame } from "./gitblame.mjs";
 
 type Contributor = {
   count: string;
@@ -428,10 +429,11 @@ export function activate(context: vscode.ExtensionContext) {
     disposableHotspotAnalysis
   );
   registerIssues(context);
+  registerGitBlame(context);
 }
 
 function getWebviewContentVisualize(
-  graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[] 
+  graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[]
 ) {
   return `
     <!DOCTYPE html>
@@ -579,7 +581,6 @@ function getWebviewContentVisualize(
     </html>`;
 }
 
-
 // function getWebviewContentVisualize(
 //   graphData: { commit: string; message: string; nodes: any[]; edges: any[] }[]
 // ) {
@@ -647,7 +648,7 @@ function getWebviewContentVisualize(
 
 //         function updateGraph(commitData) {
 //           g.selectAll("*").remove();
-          
+
 //           let hierarchyData = buildHierarchy(commitData.nodes);
 //           let pack = d3.pack().size([width - 100, height - 100]).padding(10);
 //           let root = pack(hierarchyData);
@@ -702,7 +703,7 @@ function getWebviewContentVisualize(
 //         document.getElementById("zoomIn").addEventListener("click", zoomIn);
 //         document.getElementById("zoomOut").addEventListener("click", zoomOut);
 //         document.getElementById("resetCommit").addEventListener("click", resetCommit);
-        
+
 //         nextCommit(); // Show first commit initially
 //       </script>
 //     </body>
@@ -726,8 +727,9 @@ function getWebviewContentGitLog(
             <div class="timeline-content">
                 <h3>${log.message} <span class="hash">(${log.hash})</span></h3>
                 <p>${log.date} by <b>${log.author}</b></p>
-                <button class="toggle-btn" onclick="toggleFiles('${log.hash
-        }')">Show Files</button>
+                <button class="toggle-btn" onclick="toggleFiles('${
+                  log.hash
+                }')">Show Files</button>
                 <ul id="${log.hash}" class="file-list" style="display: none;">
                     ${log.files.map((file) => `<li>${file}</li>`).join("")}
                 </ul>
@@ -860,9 +862,9 @@ function getWebviewContentInsights(data: any) {
   const languageEntries: string[] =
     typeof languages === "string"
       ? languages
-        .split(",")
-        .map((entry: string) => entry.trim())
-        .filter((entry) => entry.includes(":") && entry.includes("%"))
+          .split(",")
+          .map((entry: string) => entry.trim())
+          .filter((entry) => entry.includes(":") && entry.includes("%"))
       : [];
 
   console.log("Parsed Entries:", languageEntries);
@@ -1039,4 +1041,4 @@ function getWebviewContentHotspot(
   `;
 }
 
-export function deactivate() { }
+export function deactivate() {}

@@ -36,39 +36,43 @@
       {
         "command": "CodeAtlas.hotspotAnalysis",
         "title": "Hotspot Analysis"
+      },
+      {
+        "command": "CodeAtlas.showGitBlame",
+        "title": "Line Analysis"
       }
     ],
-     "keybindings": [
-        {
-            "command": "CodeAtlas.helloWorld",
-            "key": "ctrl+shift+h",
-            "when": "editorTextFocus"
-        },
-        {
-            "command": "CodeAtlas.getGitLog",
-            "key": "ctrl+shift+g",
-            "when": "editorTextFocus"
-        },
-        {
-            "command": "CodeAtlas.visualizeGit",
-            "key": "ctrl+shift+v",
-            "when": "editorTextFocus"
-        },
-        {
-            "command": "CodeAtlas.getIssues",
-            "key": "ctrl+shift+i",
-            "when": "editorTextFocus"
-        },
-        {
-            "command": "CodeAtlas.getEnhancedInsights",
-            "key": "ctrl+shift+e",
-            "when": "editorTextFocus"
-        },
-        {
-            "command": "CodeAtlas.hotspotAnalysis",
-            "key": "ctrl+shift+a",
-            "when": "editorTextFocus"
-        }
+    "keybindings": [
+      {
+        "command": "CodeAtlas.helloWorld",
+        "key": "ctrl+shift+h",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "CodeAtlas.getGitLog",
+        "key": "ctrl+shift+g",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "CodeAtlas.visualizeGit",
+        "key": "ctrl+shift+v",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "CodeAtlas.getIssues",
+        "key": "ctrl+shift+i",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "CodeAtlas.getEnhancedInsights",
+        "key": "ctrl+shift+e",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "CodeAtlas.hotspotAnalysis",
+        "key": "ctrl+shift+a",
+        "when": "editorTextFocus"
+      }
     ]
   },
   "scripts": {
