@@ -4,6 +4,11 @@ import * as fs from "fs";
 import * as path from "path";
 
 function findGitRoot(filePath: string): string | null {
+  /**
+   * @param filePath - The path to the file for which to find the Git root.
+   * @returns The root directory of the Git repository, or null if not found.
+   * Find the root directory of the Git repository for the given file path.
+   */
   let dir = path.dirname(filePath);
   while (dir !== path.parse(dir).root) {
     if (fs.existsSync(path.join(dir, ".git"))) {
@@ -15,6 +20,11 @@ function findGitRoot(filePath: string): string | null {
 }
 
 export function registerGitBlame(context: vscode.ExtensionContext) {
+  /**
+   * @param context - The extension context.
+   * @returns {void}
+   * This function registers a command that, when executed, retrieves the Git blame information for the currently active file in the editor.
+   */
   let disposable = vscode.commands.registerCommand(
     "CodeAtlas.showGitBlame",
     async () => {
@@ -77,6 +87,13 @@ function formatBlameOutput(
   fileContent: string,
   commentSyntax: { lineComment: string; blockComment?: [string, string] }
 ): string {
+  /**
+   * @param blameOutput - The output of the git blame command.
+   * @param fileContent - The content of the file being blamed.
+   * @param commentSyntax - The syntax for comments in the target programming language.
+   * @returns {string} - The formatted blame output with metadata as comments.
+   * This function formats the output of the git blame command by adding metadata as comments to each line of code.
+   */
   const lines = fileContent.split("\n");
   const blameLines = blameOutput.split("\n");
   const metadataMap: Record<number, string> = {};
@@ -118,6 +135,11 @@ function formatBlameOutput(
 }
 
 async function getCommentSyntax(languageId: string) {
+  /**
+   * @param languageId - The language ID of the current document.
+   * @returns {Promise<{ lineComment: string; blockComment?: [string, string] }>} - The comment syntax for the specified language.
+   * This function retrieves the comment syntax for the specified language ID.
+   */
   const languageMapping: Record<
     string,
     { lineComment: string; blockComment?: [string, string] }
