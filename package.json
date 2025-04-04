@@ -60,7 +60,7 @@
       },
       {
         "command": "CodeAtlas.getIssues",
-        "key": "ctrl+shift+i",
+        "key": "ctrl+shift+s",
         "when": "editorTextFocus"
       },
       {

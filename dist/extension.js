@@ -9331,6 +9331,14 @@ function findGitRoot(filePath) {
   return null;
 }
 function registerGitBlame(context) {
+  const decorationType = vscode2.window.createTextEditorDecorationType({
+    after: {
+      color: new vscode2.ThemeColor("editorCodeLens.foreground"),
+      margin: "0 0 0 2em",
+      fontWeight: "500"
+    },
+    rangeBehavior: vscode2.DecorationRangeBehavior.ClosedClosed
+  });
   let disposable = vscode2.commands.registerCommand(
     "CodeAtlas.showGitBlame",
     async () => {
@@ -9340,82 +9348,96 @@ function registerGitBlame(context) {
         return;
       }
       const filePath = editor.document.uri.fsPath;
-      const languageId = editor.document.languageId;
       const gitRoot = findGitRoot(filePath);
-      const commentSyntax = await getCommentSyntax(languageId);
       if (!gitRoot) {
         vscode2.window.showErrorMessage("No Git repository found!");
         return;
       }
       process.chdir(gitRoot);
-      (0, import_child_process2.exec)(`git blame --porcelain "${filePath}"`, (error, stdout, stderr) => {
-        if (error) {
-          vscode2.window.showErrorMessage(`Error running git blame: ${stderr}`);
-          return;
-        }
-        const blameData = formatBlameOutput(
-          stdout,
-          editor.document.getText(),
-          commentSyntax
-        );
-        const virtualDocumentUri = vscode2.Uri.parse("untitled:Git Blame Info");
-        vscode2.workspace.openTextDocument(virtualDocumentUri).then((doc) => {
-          vscode2.languages.setTextDocumentLanguage(doc, languageId);
-          vscode2.window.showTextDocument(doc, { preview: false }).then((editor2) => {
-            const edit = new vscode2.WorkspaceEdit();
-            edit.insert(
-              virtualDocumentUri,
-              new vscode2.Position(0, 0),
-              blameData
+      (0, import_child_process2.exec)(
+        `git blame --line-porcelain "${filePath}"`,
+        (error, stdout, stderr) => {
+          if (error) {
+            vscode2.window.showErrorMessage(
+              `Error running git blame: ${stderr}`
             );
-            return vscode2.workspace.applyEdit(edit);
-          });
-        });
-      });
+            return;
+          }
+          const blameData = parseBlameOutput(stdout);
+          applyBlameDecorations(editor, blameData, decorationType);
+        }
+      );
     }
   );
   context.subscriptions.push(disposable);
 }
-function formatBlameOutput(blameOutput, fileContent, commentSyntax) {
-  const lines = fileContent.split("\n");
-  const blameLines = blameOutput.split("\n");
+function applyBlameDecorations(editor, blameData, decorationType) {
+  const decorations = [];
+  for (const [lineNumber, metadata] of Object.entries(blameData)) {
+    const lineIndex = parseInt(lineNumber);
+    if (lineIndex >= editor.document.lineCount) continue;
+    const line = editor.document.lineAt(lineIndex);
+    const range = new vscode2.Range(line.range.end, line.range.end);
+    const cleanMetadata = metadata.replace(/\u{1F464}|\u{1F4C5}|\u{1F4DD}/gu, "").trim();
+    decorations.push({
+      range,
+      renderOptions: {
+        before: {
+          contentText: metadata,
+          fontStyle: "italic"
+        }
+      },
+      hoverMessage: new vscode2.MarkdownString(cleanMetadata)
+    });
+  }
+  console.log("Dec", decorations);
+  editor.setDecorations(decorationType, decorations);
+}
+function parseBlameOutput(blameOutput) {
+  const lines = blameOutput.split("\n");
   const metadataMap = {};
-  let currentLineNumber = 0;
-  for (let i = 0; i < blameLines.length; i++) {
-    const line = blameLines[i];
-    if (/^\t/.test(line)) {
-      currentLineNumber++;
+  let currentLineNumber = 1;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!metadataMap[currentLineNumber]) {
+      metadataMap[currentLineNumber] = {
+        author: "",
+        timestamp: "",
+        summary: ""
+      };
+    }
+    if (/^[a-f0-9]{40} \d{2} \d{2} \d$/.test(line)) {
+      const match = line.match(/^[a-f0-9]{40} \d{2} \d{2} \d$/);
+      if (match) {
+        const lineNumber = parseInt(match[0].split(" ")[2], 10);
+        currentLineNumber = lineNumber;
+      }
     } else if (/^author /.test(line)) {
       const author = line.replace(/^author /, "").trim();
-      metadataMap[currentLineNumber] = metadataMap[currentLineNumber] || "";
-      metadataMap[currentLineNumber] += `Author: ${author}`;
+      if (metadataMap[currentLineNumber].author == "") {
+        metadataMap[currentLineNumber].author = `\u{1F464} ${author}`;
+      }
     } else if (/^author-time /.test(line)) {
       const timestamp = new Date(
         parseInt(line.replace(/^author-time /, "").trim(), 10) * 1e3
       );
-      metadataMap[currentLineNumber] += ` | Date: ${timestamp.toISOString()}`;
+      if (!metadataMap[currentLineNumber].timestamp) {
+        metadataMap[currentLineNumber].timestamp = ` \u{1F4C5} ${timestamp.toLocaleDateString()}`;
+      }
     } else if (/^summary /.test(line)) {
       const summary = line.replace(/^summary /, "").trim();
-      metadataMap[currentLineNumber] += ` | Commit: ${summary}`;
+      if (!metadataMap[currentLineNumber].summary) {
+        metadataMap[currentLineNumber].summary = ` \u{1F4DD} ${summary}`;
+      }
     }
   }
-  return lines.map((line, index) => {
-    const metadata = metadataMap[index + 1];
-    if (!metadata) return line;
-    const commentPrefix = commentSyntax.lineComment || "//";
-    return `${line.replace("\n", "")}${commentPrefix} ${metadata}`;
-  }).join("\n");
-}
-async function getCommentSyntax(languageId) {
-  const languageMapping = {
-    python: { lineComment: "#" },
-    plaintext: { lineComment: "#" },
-    html: { lineComment: "<!--", blockComment: ["<!--", "-->"] }
-  };
-  if (languageMapping[languageId]) {
-    return languageMapping[languageId];
+  const finalMetadataMap = {};
+  for (const lineNumber in metadataMap) {
+    const metadata = metadataMap[lineNumber];
+    finalMetadataMap[lineNumber] = `${metadata.author}${metadata.timestamp}${metadata.summary}`;
   }
-  return { lineComment: "//" };
+  console.log("Final Metadata Map", finalMetadataMap);
+  return finalMetadataMap;
 }
 
 // src/extension.mts
@@ -9480,7 +9502,10 @@ function activate(context) {
           }
           graphData.push({
             commit: commitHash,
+            date: entry.date,
+            author: entry.author_name,
             message: entry.message,
+            filesChanged,
             nodes,
             edges
           });
@@ -9554,7 +9579,7 @@ function activate(context) {
       }
       const git = simpleGit(workspacePath);
       const contributors = [];
-      let languages2 = "";
+      let languages = "";
       let commitStats = "0";
       let dailyCommits = {};
       let firstCommit = "";
@@ -9595,7 +9620,7 @@ function activate(context) {
           (sum, count) => sum + count,
           0
         );
-        languages2 = Object.entries(fileExtensions).filter(
+        languages = Object.entries(fileExtensions).filter(
           ([ext]) => !["HEIC", "JPG", "PNG", "JPEG", "WOFF", "XLSX"].includes(ext)
         ).map(([ext, count]) => {
           const percentage = (count / totalFiles * 100).toFixed(2);
@@ -9653,7 +9678,7 @@ function activate(context) {
       );
       panel.webview.html = getWebviewContentInsights({
         contributors,
-        languages: languages2,
+        languages,
         commitCount: commitStats,
         dailyCommits,
         firstCommit,
@@ -9734,6 +9759,12 @@ function getWebviewContentVisualize(graphData) {
     </head>
     <body>
       <h2>Git Evolution Graph</h2>
+      <div id="commitInfo" style="position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; text-align: left;">
+        <strong>Commit:</strong> <span id="commitId"></span><br>
+        <strong>Author:</strong> <span id="author"></span><br>
+        <strong>Commit Message:</strong> <span id="commitMessage"></span><br>
+        <strong>Date:</strong> <span id="commitDate"></span>
+      </div>
       <svg></svg>
       <br>
       <button id="zoomIn">Zoom In</button>
@@ -9786,17 +9817,38 @@ function getWebviewContentVisualize(graphData) {
         function updateGraph(commitData) {
           g.selectAll("*").remove();
           
+          // Update commit info display
+          document.getElementById("commitId").textContent = commitData.commit;
+          document.getElementById("commitMessage").textContent = commitData.message;
+          document.getElementById("author").textContent = commitData.author;
+          document.getElementById("commitDate").textContent = commitData.date;
           let hierarchyData = buildHierarchy(commitData.nodes);
           let pack = d3.pack().size([width - 100, height - 100]).padding(10);
           let root = pack(hierarchyData);
 
+          const filesChangedSet = new Set(commitData.filesChanged); // Fast lookup for changed files
+          const prevFilesChangedSet = new Set(index > 0 ? graphData[index - 1].filesChanged : []); // Previous commit's files
           let nodes = g.selectAll("circle")
                        .data(root.descendants())
                        .enter().append("circle")
                        .attr("cx", d => d.x)
                        .attr("cy", d => d.y)
                        .attr("r", d => d.r)
-                       .attr("fill", d => d.children ? "none" : "#007acc")
+                        .attr("fill", d => {
+                            if (!d.children) { // Only apply to file nodes
+                                let filePath = d.ancestors()
+                                                .map(a => a.data.name)
+                                                .filter(name => name !== "root") // Fix root issue
+                                                .reverse()  // Fix order
+                                                .join("/");
+
+                                if (filesChangedSet.has(filePath)) {
+                                    return prevFilesChangedSet.has(filePath) ? "red" : "green";  // New files in green
+                                }
+                                return "#007acc"; // Default color for unchanged files
+                            }
+                            return "none"; // Keep folders transparent
+                        })
                        .attr("stroke", "white");
 
           // Create labels but keep them hidden initially
@@ -9831,13 +9883,15 @@ function getWebviewContentVisualize(graphData) {
 
         function nextCommit() {
           if (index < graphData.length) {
-            updateGraph(graphData[index++]);
+            index++;
+            updateGraph(graphData[index]);
           }
         }
 
         function previousCommit() {
           if (index >= 0) {
-            updateGraph(graphData[index--]);
+            index--;
+            updateGraph(graphData[index]);
           }
         }
 
@@ -9968,7 +10022,7 @@ function getWebviewContentGitLog(logDetails) {
 function getWebviewContentInsights(data) {
   const {
     contributors,
-    languages: languages2,
+    languages,
     commitCount,
     dailyCommits,
     firstCommit,
@@ -9978,9 +10032,9 @@ function getWebviewContentInsights(data) {
     (contrib) => `<li>${contrib.name} (${contrib.count} commits)</li>`
   ).join("");
   const dailyCommitsList = Object.entries(dailyCommits).map(([date, count]) => `<li>${date}: ${count} commits</li>`).join("");
-  console.log(typeof languages2);
-  console.log("Raw languages data:", languages2);
-  const languageEntries = typeof languages2 === "string" ? languages2.split(",").map((entry) => entry.trim()).filter((entry) => entry.includes(":") && entry.includes("%")) : [];
+  console.log(typeof languages);
+  console.log("Raw languages data:", languages);
+  const languageEntries = typeof languages === "string" ? languages.split(",").map((entry) => entry.trim()).filter((entry) => entry.includes(":") && entry.includes("%")) : [];
   console.log("Parsed Entries:", languageEntries);
   const languageLabels = languageEntries.map(
     (entry) => entry.split(":")[0].trim()

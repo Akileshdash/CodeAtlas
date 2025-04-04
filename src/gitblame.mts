@@ -25,20 +25,26 @@ export function registerGitBlame(context: vscode.ExtensionContext) {
    * @returns {void}
    * This function registers a command that, when executed, retrieves the Git blame information for the currently active file in the editor.
    */
+  const decorationType = vscode.window.createTextEditorDecorationType({
+    after: {
+      color: new vscode.ThemeColor("editorCodeLens.foreground"),
+      margin: "0 0 0 2em",
+      fontWeight: "500",
+    },
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+  });
+
   let disposable = vscode.commands.registerCommand(
     "CodeAtlas.showGitBlame",
     async () => {
       const editor = vscode.window.activeTextEditor;
-
       if (!editor) {
         vscode.window.showErrorMessage("No active editor found!");
         return;
       }
 
       const filePath = editor.document.uri.fsPath;
-      const languageId = editor.document.languageId;
       const gitRoot = findGitRoot(filePath);
-      const commentSyntax = await getCommentSyntax(languageId);
 
       if (!gitRoot) {
         vscode.window.showErrorMessage("No Git repository found!");
@@ -47,110 +53,131 @@ export function registerGitBlame(context: vscode.ExtensionContext) {
 
       process.chdir(gitRoot);
 
-      exec(`git blame --porcelain "${filePath}"`, (error, stdout, stderr) => {
-        if (error) {
-          vscode.window.showErrorMessage(`Error running git blame: ${stderr}`);
-          return;
+      exec(
+        `git blame --line-porcelain "${filePath}"`,
+        (error, stdout, stderr) => {
+          if (error) {
+            vscode.window.showErrorMessage(
+              `Error running git blame: ${stderr}`
+            );
+            return;
+          }
+          const blameData = parseBlameOutput(stdout);
+
+          applyBlameDecorations(editor, blameData, decorationType);
         }
-
-        const blameData = formatBlameOutput(
-          stdout,
-          editor.document.getText(),
-          commentSyntax
-        );
-
-        const virtualDocumentUri = vscode.Uri.parse("untitled:Git Blame Info");
-        vscode.workspace.openTextDocument(virtualDocumentUri).then((doc) => {
-          vscode.languages.setTextDocumentLanguage(doc, languageId);
-
-          vscode.window
-            .showTextDocument(doc, { preview: false })
-            .then((editor) => {
-              const edit = new vscode.WorkspaceEdit();
-              edit.insert(
-                virtualDocumentUri,
-                new vscode.Position(0, 0),
-                blameData
-              );
-              return vscode.workspace.applyEdit(edit);
-            });
-        });
-      });
+      );
     }
   );
 
   context.subscriptions.push(disposable);
 }
 
-function formatBlameOutput(
-  blameOutput: string,
-  fileContent: string,
-  commentSyntax: { lineComment: string; blockComment?: [string, string] }
-): string {
+function applyBlameDecorations(
+  editor: vscode.TextEditor,
+  blameData: Record<number, string>,
+  decorationType: vscode.TextEditorDecorationType
+) {
+  /**
+   * @param editor - The active text editor.
+   * @param blameData - The parsed Git blame data.
+   * @param decorationType - The decoration type for the blame information.
+   * @returns {void}
+   * This function applies the blame decorations to the editor based on the provided blame data.
+   */
+  const decorations: vscode.DecorationOptions[] = [];
+
+  for (const [lineNumber, metadata] of Object.entries(blameData)) {
+    const lineIndex = parseInt(lineNumber);
+
+    if (lineIndex >= editor.document.lineCount) continue;
+
+    const line = editor.document.lineAt(lineIndex);
+    const range = new vscode.Range(line.range.end, line.range.end);
+
+    const cleanMetadata = metadata
+      .replace(/\u{1F464}|\u{1F4C5}|\u{1F4DD}/gu, "")
+      .trim();
+
+    decorations.push({
+      range,
+      renderOptions: {
+        before: {
+          contentText: metadata,
+          fontStyle: "italic",
+        },
+      },
+      hoverMessage: new vscode.MarkdownString(cleanMetadata),
+    });
+  }
+  console.log("Dec", decorations);
+  editor.setDecorations(decorationType, decorations);
+}
+
+interface BlameMetadata {
+  /**
+   * @param author - The author of the commit.
+   * @param timestamp - The timestamp of the commit.
+   * @param summary - The summary of the commit.
+   */
+  author: string;
+  timestamp: string;
+  summary: string;
+}
+
+function parseBlameOutput(blameOutput: string): Record<number, string> {
   /**
    * @param blameOutput - The output of the git blame command.
-   * @param fileContent - The content of the file being blamed.
-   * @param commentSyntax - The syntax for comments in the target programming language.
-   * @returns {string} - The formatted blame output with metadata as comments.
-   * This function formats the output of the git blame command by adding metadata as comments to each line of code.
+   * @returns {Record<number, string>} - A mapping of line numbers to blame metadata.
+   * This function parses the output of the git blame command and returns a mapping of line numbers to blame metadata.
    */
-  const lines = fileContent.split("\n");
-  const blameLines = blameOutput.split("\n");
-  const metadataMap: Record<number, string> = {};
+  const lines = blameOutput.split("\n");
 
-  let currentLineNumber = 0;
+  const metadataMap: Record<number, BlameMetadata> = {};
+  let currentLineNumber = 1;
 
-  // Parse porcelain output to extract metadata for each line
-  for (let i = 0; i < blameLines.length; i++) {
-    const line = blameLines[i];
-
-    if (/^\t/.test(line)) {
-      // Line content starts with a tab character
-      currentLineNumber++;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (!metadataMap[currentLineNumber]) {
+      metadataMap[currentLineNumber] = {
+        author: "",
+        timestamp: "",
+        summary: "",
+      };
+    }
+    if (/^[a-f0-9]{40} \d{2} \d{2} \d$/.test(line)) {
+      const match = line.match(/^[a-f0-9]{40} \d{2} \d{2} \d$/);
+      if (match) {
+        const lineNumber = parseInt(match[0].split(" ")[2], 10);
+        currentLineNumber = lineNumber;
+      }
     } else if (/^author /.test(line)) {
       const author = line.replace(/^author /, "").trim();
-      metadataMap[currentLineNumber] = metadataMap[currentLineNumber] || "";
-      metadataMap[currentLineNumber] += `Author: ${author}`;
+      if (metadataMap[currentLineNumber].author == "") {
+        metadataMap[currentLineNumber].author = `👤 ${author}`;
+      }
     } else if (/^author-time /.test(line)) {
       const timestamp = new Date(
         parseInt(line.replace(/^author-time /, "").trim(), 10) * 1000
       );
-      metadataMap[currentLineNumber] += ` | Date: ${timestamp.toISOString()}`;
+      if (!metadataMap[currentLineNumber].timestamp) {
+        metadataMap[
+          currentLineNumber
+        ].timestamp = ` 📅 ${timestamp.toLocaleDateString()}`;
+      }
     } else if (/^summary /.test(line)) {
       const summary = line.replace(/^summary /, "").trim();
-      metadataMap[currentLineNumber] += ` | Commit: ${summary}`;
+      if (!metadataMap[currentLineNumber].summary) {
+        metadataMap[currentLineNumber].summary = ` 📝 ${summary}`;
+      }
     }
   }
-
-  // Combine code lines with their corresponding metadata as comments
-  return lines
-    .map((line, index) => {
-      const metadata = metadataMap[index + 1];
-      if (!metadata) return line;
-
-      const commentPrefix = commentSyntax.lineComment || "//";
-      return `${line.replace("\n", "")}${commentPrefix} ${metadata}`;
-    })
-    .join("\n");
-}
-
-async function getCommentSyntax(languageId: string) {
-  /**
-   * @param languageId - The language ID of the current document.
-   * @returns {Promise<{ lineComment: string; blockComment?: [string, string] }>} - The comment syntax for the specified language.
-   * This function retrieves the comment syntax for the specified language ID.
-   */
-  const languageMapping: Record<
-    string,
-    { lineComment: string; blockComment?: [string, string] }
-  > = {
-    python: { lineComment: "#" },
-    plaintext: { lineComment: "#" },
-    html: { lineComment: "<!--", blockComment: ["<!--", "-->"] },
-  };
-
-  if (languageMapping[languageId]) {
-    return languageMapping[languageId];
+  const finalMetadataMap: Record<number, string> = {};
+  for (const lineNumber in metadataMap) {
+    const metadata = metadataMap[lineNumber];
+    finalMetadataMap[
+      lineNumber
+    ] = `${metadata.author}${metadata.timestamp}${metadata.summary}`;
   }
-  return { lineComment: "//" };
+  return finalMetadataMap;
 }
