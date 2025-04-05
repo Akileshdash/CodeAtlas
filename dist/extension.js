@@ -1017,7 +1017,7 @@ __export(extension_exports, {
   deactivate: () => deactivate
 });
 module.exports = __toCommonJS(extension_exports);
-var vscode3 = __toESM(require("vscode"), 1);
+var vscode4 = __toESM(require("vscode"), 1);
 
 // node_modules/simple-git/dist/esm/index.js
 var import_file_exists = __toESM(require_dist(), 1);
@@ -1411,9 +1411,9 @@ var init_simple_git_options = __esm2({
     };
   }
 });
-function appendTaskOptions(options, commands4 = []) {
+function appendTaskOptions(options, commands5 = []) {
   if (!filterPlainObject(options)) {
-    return commands4;
+    return commands5;
   }
   return Object.keys(options).reduce((commands22, key) => {
     const value = options[key];
@@ -1425,7 +1425,7 @@ function appendTaskOptions(options, commands4 = []) {
       commands22.push(key);
     }
     return commands22;
-  }, commands4);
+  }, commands5);
 }
 function getTrailingOptions(args, initialPrimitive = 0, objectOnly = false) {
   const command = [];
@@ -1556,18 +1556,18 @@ function checkIsRepoTask(action) {
     case "root":
       return checkIsRepoRootTask();
   }
-  const commands4 = ["rev-parse", "--is-inside-work-tree"];
+  const commands5 = ["rev-parse", "--is-inside-work-tree"];
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     onError,
     parser
   };
 }
 function checkIsRepoRootTask() {
-  const commands4 = ["rev-parse", "--git-dir"];
+  const commands5 = ["rev-parse", "--git-dir"];
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     onError,
     parser(path3) {
@@ -1576,9 +1576,9 @@ function checkIsRepoRootTask() {
   };
 }
 function checkIsBareRepoTask() {
-  const commands4 = ["rev-parse", "--is-bare-repository"];
+  const commands5 = ["rev-parse", "--is-bare-repository"];
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     onError,
     parser
@@ -1668,18 +1668,18 @@ function configurationErrorTask(error) {
     }
   };
 }
-function straightThroughStringTask(commands4, trimmed2 = false) {
+function straightThroughStringTask(commands5, trimmed2 = false) {
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(text) {
       return trimmed2 ? String(text).trim() : text;
     }
   };
 }
-function straightThroughBufferTask(commands4) {
+function straightThroughBufferTask(commands5) {
   return {
-    commands: commands4,
+    commands: commands5,
     format: "buffer",
     parser(buffer) {
       return buffer;
@@ -1725,9 +1725,9 @@ function cleanWithOptionsTask(mode, customArgs) {
   return cleanTask(cleanMode, options);
 }
 function cleanTask(mode, customArgs) {
-  const commands4 = ["clean", `-${mode}`, ...customArgs];
+  const commands5 = ["clean", `-${mode}`, ...customArgs];
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(text) {
       return cleanSummaryParser(mode === "n", text);
@@ -1890,13 +1890,13 @@ function asConfigScope(scope, fallback) {
   return fallback;
 }
 function addConfigTask(key, value, append2, scope) {
-  const commands4 = ["config", `--${scope}`];
+  const commands5 = ["config", `--${scope}`];
   if (append2) {
-    commands4.push("--add");
+    commands5.push("--add");
   }
-  commands4.push(key, value);
+  commands5.push(key, value);
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(text) {
       return text;
@@ -1904,12 +1904,12 @@ function addConfigTask(key, value, append2, scope) {
   };
 }
 function getConfigTask(key, scope) {
-  const commands4 = ["config", "--null", "--show-origin", "--get-all", key];
+  const commands5 = ["config", "--null", "--show-origin", "--get-all", key];
   if (scope) {
-    commands4.splice(1, 0, `--${scope}`);
+    commands5.splice(1, 0, `--${scope}`);
   }
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(text) {
       return configGetParser(text, key);
@@ -1917,12 +1917,12 @@ function getConfigTask(key, scope) {
   };
 }
 function listConfigTask(scope) {
-  const commands4 = ["config", "--list", "--show-origin", "--null"];
+  const commands5 = ["config", "--list", "--show-origin", "--null"];
   if (scope) {
-    commands4.push(`--${scope}`);
+    commands5.push(`--${scope}`);
   }
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(text) {
       return configListParser(text);
@@ -2034,10 +2034,10 @@ function grep_default() {
       if (typeof searchTerm === "string") {
         searchTerm = grepQueryBuilder().param(searchTerm);
       }
-      const commands4 = ["grep", "--null", "-n", "--full-name", ...options, ...searchTerm];
+      const commands5 = ["grep", "--null", "-n", "--full-name", ...options, ...searchTerm];
       return this._runTask(
         {
-          commands: commands4,
+          commands: commands5,
           format: "utf-8",
           parser(stdOut) {
             return parseGrep(stdOut);
@@ -2086,12 +2086,12 @@ __export2(reset_exports, {
   resetTask: () => resetTask
 });
 function resetTask(mode, customArgs) {
-  const commands4 = ["reset"];
+  const commands5 = ["reset"];
   if (isValidResetMode(mode)) {
-    commands4.push(`--${mode}`);
+    commands5.push(`--${mode}`);
   }
-  commands4.push(...customArgs);
-  return straightThroughStringTask(commands4);
+  commands5.push(...customArgs);
+  return straightThroughStringTask(commands5);
 }
 function getResetMode(mode) {
   if (isValidResetMode(mode)) {
@@ -2259,10 +2259,10 @@ var init_tasks_pending_queue = __esm2({
     TasksPendingQueue.counter = 0;
   }
 });
-function pluginContext(task, commands4) {
+function pluginContext(task, commands5) {
   return {
     method: first(task.commands) || "",
-    commands: commands4
+    commands: commands5
   };
 }
 function onErrorReceived(target, logger) {
@@ -2566,11 +2566,11 @@ var init_change_working_directory = __esm2({
   }
 });
 function checkoutTask(args) {
-  const commands4 = ["checkout", ...args];
-  if (commands4[1] === "-b" && commands4.includes("-B")) {
-    commands4[1] = remove(commands4, "-B");
+  const commands5 = ["checkout", ...args];
+  if (commands5[1] === "-b" && commands5.includes("-B")) {
+    commands5[1] = remove(commands5, "-B");
   }
-  return straightThroughStringTask(commands4);
+  return straightThroughStringTask(commands5);
 }
 function checkout_default() {
   return {
@@ -2702,7 +2702,7 @@ var init_parse_commit = __esm2({
   }
 });
 function commitTask(message, files, customArgs) {
-  const commands4 = [
+  const commands5 = [
     "-c",
     "core.abbrev=40",
     "commit",
@@ -2711,7 +2711,7 @@ function commitTask(message, files, customArgs) {
     ...customArgs
   ];
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser: parseCommitResult
   };
@@ -2760,11 +2760,11 @@ var init_first_commit = __esm2({
   }
 });
 function hashObjectTask(filePath, write) {
-  const commands4 = ["hash-object", filePath];
+  const commands5 = ["hash-object", filePath];
   if (write) {
-    commands4.push("-w");
+    commands5.push("-w");
   }
-  return straightThroughStringTask(commands4, true);
+  return straightThroughStringTask(commands5, true);
 }
 var init_hash_object = __esm2({
   "src/lib/tasks/hash-object.ts"() {
@@ -2814,15 +2814,15 @@ function hasBareCommand(command) {
   return command.includes(bareCommand);
 }
 function initTask(bare = false, path3, customArgs) {
-  const commands4 = ["init", ...customArgs];
-  if (bare && !hasBareCommand(commands4)) {
-    commands4.splice(1, 0, bareCommand);
+  const commands5 = ["init", ...customArgs];
+  if (bare && !hasBareCommand(commands5)) {
+    commands5.splice(1, 0, bareCommand);
   }
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(text) {
-      return parseInit(commands4.includes("--bare"), path3, text);
+      return parseInit(commands5.includes("--bare"), path3, text);
     }
   };
 }
@@ -3054,14 +3054,14 @@ __export2(diff_exports, {
 });
 function diffSummaryTask(customArgs) {
   let logFormat = logFormatFromCommand(customArgs);
-  const commands4 = ["diff"];
+  const commands5 = ["diff"];
   if (logFormat === "") {
     logFormat = "--stat";
-    commands4.push("--stat=4096");
+    commands5.push("--stat=4096");
   }
-  commands4.push(...customArgs);
-  return validateLogFormatConfig(commands4) || {
-    commands: commands4,
+  commands5.push(...customArgs);
+  return validateLogFormatConfig(commands5) || {
+    commands: commands5,
     format: "utf-8",
     parser: getDiffParser(logFormat)
   };
@@ -3575,18 +3575,18 @@ function pushTagsTask(ref = {}, customArgs) {
   return pushTask(ref, customArgs);
 }
 function pushTask(ref = {}, customArgs) {
-  const commands4 = ["push", ...customArgs];
+  const commands5 = ["push", ...customArgs];
   if (ref.branch) {
-    commands4.splice(1, 0, ref.branch);
+    commands5.splice(1, 0, ref.branch);
   }
   if (ref.remote) {
-    commands4.splice(1, 0, ref.remote);
+    commands5.splice(1, 0, ref.remote);
   }
-  remove(commands4, "-v");
-  append(commands4, "--verbose");
-  append(commands4, "--porcelain");
+  remove(commands5, "-v");
+  append(commands5, "--verbose");
+  append(commands5, "--porcelain");
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser: parsePushResult
   };
@@ -3601,19 +3601,19 @@ var init_push = __esm2({
 function show_default() {
   return {
     showBuffer() {
-      const commands4 = ["show", ...getTrailingOptions(arguments, 1)];
-      if (!commands4.includes("--binary")) {
-        commands4.splice(1, 0, "--binary");
+      const commands5 = ["show", ...getTrailingOptions(arguments, 1)];
+      if (!commands5.includes("--binary")) {
+        commands5.splice(1, 0, "--binary");
       }
       return this._runTask(
-        straightThroughBufferTask(commands4),
+        straightThroughBufferTask(commands5),
         trailingFunctionArgument(arguments)
       );
     },
     show() {
-      const commands4 = ["show", ...getTrailingOptions(arguments, 1)];
+      const commands5 = ["show", ...getTrailingOptions(arguments, 1)];
       return this._runTask(
-        straightThroughStringTask(commands4),
+        straightThroughStringTask(commands5),
         trailingFunctionArgument(arguments)
       );
     }
@@ -3826,7 +3826,7 @@ var init_StatusSummary = __esm2({
   }
 });
 function statusTask(customArgs) {
-  const commands4 = [
+  const commands5 = [
     "status",
     "--porcelain",
     "-b",
@@ -3836,7 +3836,7 @@ function statusTask(customArgs) {
   ];
   return {
     format: "utf-8",
-    commands: commands4,
+    commands: commands5,
     parser(text) {
       return parseStatusSummary(text);
     }
@@ -4257,22 +4257,22 @@ __export2(branch_exports, {
   deleteBranchTask: () => deleteBranchTask,
   deleteBranchesTask: () => deleteBranchesTask
 });
-function containsDeleteBranchCommand(commands4) {
+function containsDeleteBranchCommand(commands5) {
   const deleteCommands = ["-d", "-D", "--delete"];
-  return commands4.some((command) => deleteCommands.includes(command));
+  return commands5.some((command) => deleteCommands.includes(command));
 }
 function branchTask(customArgs) {
   const isDelete = containsDeleteBranchCommand(customArgs);
-  const commands4 = ["branch", ...customArgs];
-  if (commands4.length === 1) {
-    commands4.push("-a");
+  const commands5 = ["branch", ...customArgs];
+  if (commands5.length === 1) {
+    commands5.push("-a");
   }
-  if (!commands4.includes("-v")) {
-    commands4.splice(1, 0, "-v");
+  if (!commands5.includes("-v")) {
+    commands5.splice(1, 0, "-v");
   }
   return {
     format: "utf-8",
-    commands: commands4,
+    commands: commands5,
     parser(stdOut, stdErr) {
       if (isDelete) {
         return parseBranchDeletions(stdOut, stdErr).all[0];
@@ -4367,14 +4367,14 @@ function disallowedCommand(command) {
   return /^--upload-pack(=|$)/.test(command);
 }
 function cloneTask(repo, directory, customArgs) {
-  const commands4 = ["clone", ...customArgs];
-  filterString(repo) && commands4.push(repo);
-  filterString(directory) && commands4.push(directory);
-  const banned = commands4.find(disallowedCommand);
+  const commands5 = ["clone", ...customArgs];
+  filterString(repo) && commands5.push(repo);
+  filterString(directory) && commands5.push(directory);
+  const banned = commands5.find(disallowedCommand);
   if (banned) {
     return configurationErrorTask(`git.fetch: potential exploit argument blocked.`);
   }
-  return straightThroughStringTask(commands4);
+  return straightThroughStringTask(commands5);
 }
 function cloneMirrorTask(repo, directory, customArgs) {
   append(customArgs, "--mirror");
@@ -4446,16 +4446,16 @@ function disallowedCommand2(command) {
   return /^--upload-pack(=|$)/.test(command);
 }
 function fetchTask(remote, branch, customArgs) {
-  const commands4 = ["fetch", ...customArgs];
+  const commands5 = ["fetch", ...customArgs];
   if (remote && branch) {
-    commands4.push(remote, branch);
+    commands5.push(remote, branch);
   }
-  const banned = commands4.find(disallowedCommand2);
+  const banned = commands5.find(disallowedCommand2);
   if (banned) {
     return configurationErrorTask(`git.fetch: potential exploit argument blocked.`);
   }
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser: parseFetchResult
   };
@@ -4505,12 +4505,12 @@ __export2(pull_exports, {
   pullTask: () => pullTask
 });
 function pullTask(remote, branch, customArgs) {
-  const commands4 = ["pull", ...customArgs];
+  const commands5 = ["pull", ...customArgs];
   if (remote && branch) {
-    commands4.splice(1, 0, remote, branch);
+    commands5.splice(1, 0, remote, branch);
   }
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser(stdOut, stdErr) {
       return parsePullResult(stdOut, stdErr);
@@ -4576,29 +4576,29 @@ function addRemoteTask(remoteName, remoteRepo, customArgs) {
   return straightThroughStringTask(["remote", "add", ...customArgs, remoteName, remoteRepo]);
 }
 function getRemotesTask(verbose) {
-  const commands4 = ["remote"];
+  const commands5 = ["remote"];
   if (verbose) {
-    commands4.push("-v");
+    commands5.push("-v");
   }
   return {
-    commands: commands4,
+    commands: commands5,
     format: "utf-8",
     parser: verbose ? parseGetRemotesVerbose : parseGetRemotes
   };
 }
 function listRemotesTask(customArgs) {
-  const commands4 = [...customArgs];
-  if (commands4[0] !== "ls-remote") {
-    commands4.unshift("ls-remote");
+  const commands5 = [...customArgs];
+  if (commands5[0] !== "ls-remote") {
+    commands5.unshift("ls-remote");
   }
-  return straightThroughStringTask(commands4);
+  return straightThroughStringTask(commands5);
 }
 function remoteTask(customArgs) {
-  const commands4 = [...customArgs];
-  if (commands4[0] !== "remote") {
-    commands4.unshift("remote");
+  const commands5 = [...customArgs];
+  if (commands5[0] !== "remote") {
+    commands5.unshift("remote");
   }
-  return straightThroughStringTask(commands4);
+  return straightThroughStringTask(commands5);
 }
 function removeRemoteTask(remoteName) {
   return straightThroughStringTask(["remote", "remove", remoteName]);
@@ -4616,14 +4616,14 @@ __export2(stash_list_exports, {
 });
 function stashListTask(opt = {}, customArgs) {
   const options = parseLogOptions(opt);
-  const commands4 = ["stash", "list", ...options.commands, ...customArgs];
+  const commands5 = ["stash", "list", ...options.commands, ...customArgs];
   const parser4 = createListLogSummaryParser(
     options.splitter,
     options.fields,
-    logFormatFromCommand(commands4)
+    logFormatFromCommand(commands5)
   );
-  return validateLogFormatConfig(commands4) || {
-    commands: commands4,
+  return validateLogFormatConfig(commands5) || {
+    commands: commands5,
     format: "utf-8",
     parser: parser4
   };
@@ -4651,11 +4651,11 @@ function initSubModuleTask(customArgs) {
   return subModuleTask(["init", ...customArgs]);
 }
 function subModuleTask(customArgs) {
-  const commands4 = [...customArgs];
-  if (commands4[0] !== "submodule") {
-    commands4.unshift("submodule");
+  const commands5 = [...customArgs];
+  if (commands5[0] !== "submodule") {
+    commands5.unshift("submodule");
   }
-  return straightThroughStringTask(commands4);
+  return straightThroughStringTask(commands5);
 }
 function updateSubModuleTask(customArgs) {
   return subModuleTask(["update", ...customArgs]);
@@ -4956,9 +4956,9 @@ var require_git = __commonJS2({
     Git2.prototype.branchLocal = function(then) {
       return this._runTask(branchLocalTask2(), trailingFunctionArgument2(arguments));
     };
-    Git2.prototype.raw = function(commands4) {
-      const createRestCommands = !Array.isArray(commands4);
-      const command = [].slice.call(createRestCommands ? arguments : commands4, 0);
+    Git2.prototype.raw = function(commands5) {
+      const createRestCommands = !Array.isArray(commands5);
+      const command = [].slice.call(createRestCommands ? arguments : commands5, 0);
       for (let i = 0; i < command.length && createRestCommands; i++) {
         if (!filterPrimitives2(command[i])) {
           command.splice(i, command.length - i);
@@ -5093,9 +5093,9 @@ var require_git = __commonJS2({
       return this._runTask(task, trailingFunctionArgument2(arguments));
     };
     Git2.prototype.revparse = function() {
-      const commands4 = ["rev-parse", ...getTrailingOptions2(arguments, true)];
+      const commands5 = ["rev-parse", ...getTrailingOptions2(arguments, true)];
       return this._runTask(
-        straightThroughStringTask2(commands4, true),
+        straightThroughStringTask2(commands5, true),
         trailingFunctionArgument2(arguments)
       );
     };
@@ -9439,15 +9439,9 @@ function parseBlameOutput(blameOutput) {
   return finalMetadataMap;
 }
 
-// src/extension.mts
-function activate(context) {
-  console.log("CodeAtlas is now active!");
-  const disposableHelllo = vscode3.commands.registerCommand(
-    "CodeAtlas.helloWorld",
-    () => {
-      vscode3.window.showInformationMessage("Hello World from CodeAtlas!");
-    }
-  );
+// src/visualize.mts
+var vscode3 = __toESM(require("vscode"), 1);
+function registerVisualize(context) {
   const disposableVisualize = vscode3.commands.registerCommand(
     "CodeAtlas.visualizeGit",
     async () => {
@@ -9463,67 +9457,42 @@ function activate(context) {
           vscode3.window.showErrorMessage("No Git Commits found");
           return;
         }
-        const logDetails = [];
-        let graphData = [];
-        let fileMap = /* @__PURE__ */ new Map();
-        let commitIndexMap = /* @__PURE__ */ new Map();
-        let commitIndex = 0;
-        for (const entry of [...log.all].reverse()) {
-          commitIndexMap.set(entry.hash, commitIndex++);
-          const commitHash = entry.hash;
-          const commitDetails = await git.show([commitHash, "--name-only"]);
-          const filesChanged = commitDetails.split("\n").slice(5).filter((line) => line.trim() !== "");
-          const allFilesOutput = await git.raw([
-            "ls-tree",
-            "-r",
-            "--name-only",
-            commitHash
-          ]);
-          const allFiles = allFilesOutput.split("\n").map((file) => file.trim()).filter((file) => file !== "");
-          let nodes = [];
-          let edges = [];
-          allFiles.forEach((file) => {
-            if (!fileMap.has(file)) {
-              fileMap.set(file, { id: file, label: file });
-            }
-            let node = { ...fileMap.get(file), lastModified: 0 };
-            try {
-              git.raw(["log", "-1", `${commitHash}`, `${file}`]).then((output) => {
-                const lastCommit = output.split("\n")[0].split(" ")[1].trim();
-                node.lastModified = commitIndexMap.get(lastCommit);
-              });
-            } catch (error) {
-              console.error(
-                `Error fetching last modified commit for ${file}:`,
-                error
-              );
-              node.lastModified = commitIndex - 1;
-            }
-            nodes.push(node);
-          });
-          console.log(nodes);
-          for (let i = 0; i < allFiles.length - 1; i++) {
-            for (let j = i + 1; j < allFiles.length; j++) {
-              edges.push({ source: allFiles[i], target: allFiles[j] });
-            }
-          }
-          graphData.push({
-            commit: commitHash,
-            date: entry.date,
-            author: entry.author_name,
-            message: entry.message,
-            filesChanged,
-            nodes,
-            edges
-          });
-        }
+        const firstCommit = log.all[log.all.length - 1];
+        const CommitMap = /* @__PURE__ */ new Map();
+        const firstCommitData = await fetchCommitData(
+          git,
+          firstCommit,
+          CommitMap
+        );
+        CommitMap.set(firstCommit.hash, 0);
         const panel = vscode3.window.createWebviewPanel(
           "gitGraphView",
           "Git Graph",
           vscode3.ViewColumn.One,
           { enableScripts: true }
         );
-        panel.webview.html = getWebviewContentVisualize(graphData);
+        panel.webview.html = getWebviewContentVisualize([firstCommitData]);
+        panel.webview.onDidReceiveMessage(async (message) => {
+          if (message.command === "fetch") {
+            const nextCommitIndex = message.index;
+            console.log("Next Commit Index:", nextCommitIndex);
+            if (nextCommitIndex < log.all.length) {
+              const nextCommit = log.all[log.all.length - 1 - nextCommitIndex];
+              if (!CommitMap.has(nextCommit.hash)) {
+                CommitMap.set(nextCommit.hash, nextCommitIndex);
+              }
+              const nextCommitData = await fetchCommitData(
+                git,
+                nextCommit,
+                CommitMap
+              );
+              panel.webview.postMessage({
+                command: "updateGraph",
+                data: nextCommitData
+              });
+            }
+          }
+        });
         vscode3.window.showInformationMessage("Git Graph visualization ready!");
       } catch (err) {
         vscode3.window.showErrorMessage("Failed to fetch Git Data.");
@@ -9531,19 +9500,268 @@ function activate(context) {
       }
     }
   );
-  const disposableGitLog = vscode3.commands.registerCommand(
+  context.subscriptions.push(disposableVisualize);
+}
+async function fetchCommitData(git, commit, commitMap, index = 0) {
+  const commitHash = commit.hash;
+  const commitDetails = await git.show([commitHash, "--name-only"]);
+  const filesChanged = commitDetails.split("\n").slice(5).filter((line) => line.trim() !== "");
+  const allFilesOutput = await git.raw([
+    "ls-tree",
+    "-r",
+    "--name-only",
+    commitHash
+  ]);
+  const allFiles = allFilesOutput.split("\n").map((file) => file.trim()).filter((file) => file !== "");
+  let nodes = [];
+  for (const file of allFiles) {
+    let node = { id: file, label: file, lastModified: 0 };
+    try {
+      const output = await git.raw(["log", "-1", `${commitHash}`, `${file}`]);
+      const lastCommit = output.split("\n")[0].split(" ")[1].trim();
+      node.lastModified = Number(commitMap.get(lastCommit) || index);
+    } catch (error) {
+      console.error(`Error fetching last modified commit for ${file}:`, error);
+    }
+    nodes.push(node);
+  }
+  return {
+    commit: commit.hash,
+    date: commit.date,
+    author: commit.author_name,
+    message: commit.message,
+    filesChanged,
+    nodes
+  };
+}
+function getWebviewContentVisualize(graphData) {
+  return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <script src="https://d3js.org/d3.v6.min.js"></script>
+        <style>
+          body { background: black; color: white; text-align: center; font-family: Arial; }
+          svg { width: 100%; height: 600px; border: 1px solid white; }
+          button { background: #007acc; color: white; border: none; padding: 10px; margin: 5px; cursor: pointer; }
+          text { pointer-events: none; }
+        </style>
+      </head>
+      <body>
+        <h2>Git Evolution Graph</h2>
+        <div id="commitInfo" style="position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; text-align: left;">
+          <strong>Commit:</strong> <span id="commitId"></span><br>
+          <strong>Author:</strong> <span id="author"></span><br>
+          <strong>Commit Message:</strong> <span id="commitMessage"></span><br>
+          <strong>Date:</strong> <span id="commitDate"></span>
+        </div>
+        <svg></svg>
+        <br>
+        <button id="zoomIn">Zoom In</button>
+        <button id="zoomOut">Zoom Out</button>
+        <button id="resetCommit">Reset</button>
+        <button id="nextCommit">Next Commit</button>
+        <button id="previousCommit">Previous Commit</button>
+  
+        <script>
+          let graphData = ${JSON.stringify(graphData)};
+          const vscode = acquireVsCodeApi();
+          let index = 0;
+          let width = window.innerWidth, height = 600;
+  
+          let svg = d3.select("svg")
+                      .attr("width", width)
+                      .attr("height", height);
+  
+          let g = svg.append("g"); // Group for zooming
+  
+          let zoom = d3.zoom()
+                       .scaleExtent([0.5, 5]) // Min and max zoom scale
+                       .on("zoom", (event) => g.attr("transform", event.transform));
+  
+          svg.call(zoom); // Enable zoom on SVG
+
+          window.addEventListener("message", (event) => {
+                if (event.data.command === "updateGraph") {
+                graphData.push(event.data.data);
+                index = graphData.length - 1;
+                updateGraph(graphData[index]);
+                }
+          });
+  
+          function buildHierarchy(nodes) {
+            let root = { name: "root", children: [] };
+            let map = { "root": root };
+  
+            nodes.forEach(node => {
+              let parts = node.id.split("/");
+              let filename = parts.pop();
+              let current = root;
+  
+              parts.forEach(part => {
+                if (!map[part]) {
+                  let newFolder = { name: part, children: [] };
+                  map[part] = newFolder;
+                  current.children.push(newFolder);
+                }
+                current = map[part];
+              });
+  
+              current.children.push({ name: filename, size: 1, type: "file" });
+            });
+  
+            return d3.hierarchy(root).sum(d => d.size);
+          }
+  
+          function updateGraph(commitData) {
+            g.selectAll("*").remove();
+            
+            // Update commit info display
+            document.getElementById("commitId").textContent = commitData.commit;
+            document.getElementById("commitMessage").textContent = commitData.message;
+            document.getElementById("author").textContent = commitData.author;
+            document.getElementById("commitDate").textContent = commitData.date;
+            let hierarchyData = buildHierarchy(commitData.nodes);
+            let pack = d3.pack().size([width - 100, height - 100]).padding(10);
+            let root = pack(hierarchyData);
+  
+            const filesChangedSet = new Set(commitData.filesChanged); // Fast lookup for changed files
+            const prevFilesChangedSet = new Set(index > 0 ? graphData[index - 1].filesChanged : []); // Previous commit's files
+            const nodesLastModifiedMap = new Map();
+            commitData.nodes.forEach(node => {
+              nodesLastModifiedMap.set(node.id, node.lastModified);
+            });
+            console.log(nodesLastModifiedMap);
+            let nodes = g.selectAll("circle")
+                         .data(root.descendants())
+                         .enter().append("circle")
+                         .attr("cx", d => d.x)
+                         .attr("cy", d => d.y)
+                         .attr("r", d => d.r)
+                          .attr("fill", d => {
+                              if (!d.children) { // Only apply to file nodes
+                                  let filePath = d.ancestors()
+                                                  .map(a => a.data.name)
+                                                  .filter(name => name !== "root") // Fix root issue
+                                                  .reverse()  // Fix order
+                                                  .join("/");
+  
+                                  if (filesChangedSet.has(filePath)) {
+                                      return prevFilesChangedSet.has(filePath) ? "red" : "green";  // New files in green
+                                  }
+                                  return "#007acc"; // Default color for unchanged files
+                              }
+                              return "none"; // Keep folders transparent
+                          })
+                         .attr("stroke", "white");
+  
+            // Create labels but keep them hidden initially
+            let labels = g.selectAll("text")
+                          .data(root.descendants())
+                          .enter().append("text")
+                          .attr("x", d => d.x)
+                          .attr("y", d => d.y - d.r - 5)
+                          .text(d => d.data.name)
+                          .attr("fill", "white")
+                          .attr("font-size", "12px")
+                          .attr("text-anchor", "middle")
+                          .style("opacity", 0);  // Hide labels initially
+  
+            // Show label on hover
+            nodes.on("mouseover", function(event, d) {
+              // Find the corresponding label and show it
+              d3.select(this).style("cursor", "pointer");
+              labels.filter(l => l.data.name === d.data.name)
+                    .transition().duration(200)
+                    .style("opacity", 1);  // Fade in the label
+            });
+  
+            
+            nodes.on("click", function(event, d) {
+              if (!d.children){
+                const filePath = d.ancestors()
+                  .map(a => a.data.name)
+                  .filter(name => name !== "root") 
+                  .reverse() 
+                  .join("/");
+                index = nodesLastModifiedMap.get(filePath);
+                updateGraph(graphData[index]);
+              }
+            });
+  
+  
+            // Hide label on mouseout
+            nodes.on("mouseout", function(event, d) {
+              // Hide the label when the mouse leaves
+              labels.filter(l => l.data.name === d.data.name)
+                    .transition().duration(200)
+                    .style("opacity", 0);  // Fade out the label
+            });
+          }
+  
+          function nextCommit() {
+            if (index < graphData.length - 1) {
+                index++;
+                updateGraph(graphData[index]);
+            } else {
+                vscode.postMessage({ command: "fetch", index: graphData.length });
+            }
+          }
+  
+          function previousCommit() {
+            if (index >= 0) {
+              index--;
+              updateGraph(graphData[index]);
+            }
+          }
+  
+          function zoomIn() {
+            svg.transition().call(zoom.scaleBy, 1.2);
+          }
+  
+          function zoomOut() {
+            svg.transition().call(zoom.scaleBy, 0.8);
+          }
+  
+          function resetCommit() {
+            index=0;
+            updateGraph(graphData[index]);
+          }
+  
+          document.getElementById("nextCommit").addEventListener("click", nextCommit);
+          document.getElementById("previousCommit").addEventListener("click", previousCommit);
+          document.getElementById("zoomIn").addEventListener("click", zoomIn);
+          document.getElementById("zoomOut").addEventListener("click", zoomOut);
+          document.getElementById("resetCommit").addEventListener("click", resetCommit);
+          
+          updateGraph(graphData[index]); 
+        </script>
+      </body>
+      </html>`;
+}
+
+// src/extension.mts
+function activate(context) {
+  console.log("CodeAtlas is now active!");
+  const disposableHelllo = vscode4.commands.registerCommand(
+    "CodeAtlas.helloWorld",
+    () => {
+      vscode4.window.showInformationMessage("Hello World from CodeAtlas!");
+    }
+  );
+  const disposableGitLog = vscode4.commands.registerCommand(
     "CodeAtlas.getGitLog",
     async () => {
-      const workspacePath = vscode3.workspace.workspaceFolders?.[0].uri.fsPath;
+      const workspacePath = vscode4.workspace.workspaceFolders?.[0].uri.fsPath;
       if (!workspacePath) {
-        vscode3.window.showErrorMessage("No workspace is open");
+        vscode4.window.showErrorMessage("No workspace is open");
         return;
       }
       const git = simpleGit({ baseDir: workspacePath });
       try {
         const log = await git.log();
         if (!log.all || log.all.length === 0) {
-          vscode3.window.showErrorMessage("No Git Commits found");
+          vscode4.window.showErrorMessage("No Git Commits found");
           return;
         }
         const logDetails = [];
@@ -9559,29 +9777,29 @@ function activate(context) {
             files: filesChanged
           });
         }
-        const panel = vscode3.window.createWebviewPanel(
+        const panel = vscode4.window.createWebviewPanel(
           "gitLogView",
           "Git Commit Logs",
-          vscode3.ViewColumn.One,
+          vscode4.ViewColumn.One,
           { enableScripts: true }
         );
         panel.webview.html = getWebviewContentGitLog(logDetails);
-        vscode3.window.showInformationMessage(
+        vscode4.window.showInformationMessage(
           "Git Logs saved in the file git-log.txt"
         );
       } catch (err) {
-        vscode3.window.showErrorMessage("Failed to fetch Git Logs.");
+        vscode4.window.showErrorMessage("Failed to fetch Git Logs.");
         console.error(err);
       }
     }
   );
-  const disposableInsights = vscode3.commands.registerCommand(
+  const disposableInsights = vscode4.commands.registerCommand(
     "CodeAtlas.getEnhancedInsights",
     async () => {
-      vscode3.window.showInformationMessage("Fetching project insights...1");
-      const workspacePath = vscode3.workspace.workspaceFolders?.[0].uri.fsPath;
+      vscode4.window.showInformationMessage("Fetching project insights...1");
+      const workspacePath = vscode4.workspace.workspaceFolders?.[0].uri.fsPath;
       if (!workspacePath) {
-        vscode3.window.showErrorMessage("No workspace is open");
+        vscode4.window.showErrorMessage("No workspace is open");
         return;
       }
       const git = simpleGit(workspacePath);
@@ -9592,10 +9810,10 @@ function activate(context) {
       let firstCommit = "";
       let latestCommit = "";
       try {
-        vscode3.window.showInformationMessage("Fetching project insights...2");
+        vscode4.window.showInformationMessage("Fetching project insights...2");
         const log = await git.log();
         if (!log.all || log.all.length === 0) {
-          vscode3.window.showErrorMessage("No Git Commits found");
+          vscode4.window.showErrorMessage("No Git Commits found");
           return;
         }
         log.all.forEach((entry) => {
@@ -9610,11 +9828,11 @@ function activate(context) {
             contributors.push({ name: entry.author_name, count: "1" });
           }
         });
-        vscode3.window.showInformationMessage(
+        vscode4.window.showInformationMessage(
           `\u2705 Contributors fetched: ${contributors.length}`
         );
       } catch (err) {
-        vscode3.window.showErrorMessage("Failed to fetch contributors.");
+        vscode4.window.showErrorMessage("Failed to fetch contributors.");
         console.error("Contributors Error:", err);
       }
       try {
@@ -9637,9 +9855,9 @@ function activate(context) {
           const percentB = parseFloat(b.match(/\(([\d.]+)%\)/)[1]);
           return percentB - percentA;
         }).join(", ");
-        vscode3.window.showInformationMessage(`\u2705 Languages fetched.`);
+        vscode4.window.showInformationMessage(`\u2705 Languages fetched.`);
       } catch (err) {
-        vscode3.window.showErrorMessage("Failed to fetch languages.");
+        vscode4.window.showErrorMessage("Failed to fetch languages.");
         console.error("Languages Error:", err);
       }
       try {
@@ -9654,9 +9872,9 @@ function activate(context) {
           acc[date] = (acc[date] || 0) + 1;
           return acc;
         }, {});
-        vscode3.window.showInformationMessage(`\u2705 Commit stats fetched.`);
+        vscode4.window.showInformationMessage(`\u2705 Commit stats fetched.`);
       } catch (err) {
-        vscode3.window.showErrorMessage("Failed to fetch commit statistics.");
+        vscode4.window.showErrorMessage("Failed to fetch commit statistics.");
         console.error("Commit Stats Error:", err);
       }
       try {
@@ -9672,15 +9890,15 @@ function activate(context) {
           "--pretty=format:%h %cd %s",
           "--date=short"
         ])).split("\n")[0];
-        vscode3.window.showInformationMessage(`\u2705 Commit history fetched.`);
+        vscode4.window.showInformationMessage(`\u2705 Commit history fetched.`);
       } catch (err) {
-        vscode3.window.showErrorMessage("Failed to fetch commit history.");
+        vscode4.window.showErrorMessage("Failed to fetch commit history.");
         console.error("Commit History Error:", err);
       }
-      const panel = vscode3.window.createWebviewPanel(
+      const panel = vscode4.window.createWebviewPanel(
         "projectInsights",
         "Project Insights",
-        vscode3.ViewColumn.One,
+        vscode4.ViewColumn.One,
         { enableScripts: true }
       );
       panel.webview.html = getWebviewContentInsights({
@@ -9691,22 +9909,22 @@ function activate(context) {
         firstCommit,
         latestCommit
       });
-      vscode3.window.showInformationMessage("Fetching project insights...4");
+      vscode4.window.showInformationMessage("Fetching project insights...4");
     }
   );
-  const disposableHotspotAnalysis = vscode3.commands.registerCommand(
+  const disposableHotspotAnalysis = vscode4.commands.registerCommand(
     "CodeAtlas.hotspotAnalysis",
     async () => {
-      const workspacePath = vscode3.workspace.workspaceFolders?.[0].uri.fsPath;
+      const workspacePath = vscode4.workspace.workspaceFolders?.[0].uri.fsPath;
       if (!workspacePath) {
-        vscode3.window.showErrorMessage("No workspace is open");
+        vscode4.window.showErrorMessage("No workspace is open");
         return;
       }
       const git = simpleGit({ baseDir: workspacePath });
       try {
         const log = await git.log({ "--name-only": null });
         if (!log.all || log.all.length === 0) {
-          vscode3.window.showErrorMessage("No Git Commits found.");
+          vscode4.window.showErrorMessage("No Git Commits found.");
           return;
         }
         const fileChangeCounts = {};
@@ -9725,226 +9943,31 @@ function activate(context) {
           }
         }
         if (Object.keys(fileChangeCounts).length === 0) {
-          vscode3.window.showErrorMessage("No file changes detected.");
+          vscode4.window.showErrorMessage("No file changes detected.");
           return;
         }
-        const panel = vscode3.window.createWebviewPanel(
+        const panel = vscode4.window.createWebviewPanel(
           "hotspotAnalysis",
           "Hotspot Analysis",
-          vscode3.ViewColumn.One,
+          vscode4.ViewColumn.One,
           { enableScripts: true }
         );
         panel.webview.html = getWebviewContentHotspot(fileChangeCounts);
       } catch (error) {
-        vscode3.window.showErrorMessage("Failed to analyze hotspots.");
+        vscode4.window.showErrorMessage("Failed to analyze hotspots.");
         console.error("Hotspot Analysis Error:", error);
       }
     }
   );
   context.subscriptions.push(
     disposableHelllo,
-    disposableVisualize,
     disposableGitLog,
     disposableInsights,
     disposableHotspotAnalysis
   );
   registerIssues(context);
   registerGitBlame(context);
-}
-function getWebviewContentVisualize(graphData) {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <script src="https://d3js.org/d3.v6.min.js"></script>
-      <style>
-        body { background: black; color: white; text-align: center; font-family: Arial; }
-        svg { width: 100%; height: 600px; border: 1px solid white; }
-        button { background: #007acc; color: white; border: none; padding: 10px; margin: 5px; cursor: pointer; }
-        text { pointer-events: none; }
-      </style>
-    </head>
-    <body>
-      <h2>Git Evolution Graph</h2>
-      <div id="commitInfo" style="position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; text-align: left;">
-        <strong>Commit:</strong> <span id="commitId"></span><br>
-        <strong>Author:</strong> <span id="author"></span><br>
-        <strong>Commit Message:</strong> <span id="commitMessage"></span><br>
-        <strong>Date:</strong> <span id="commitDate"></span>
-      </div>
-      <svg></svg>
-      <br>
-      <button id="zoomIn">Zoom In</button>
-      <button id="zoomOut">Zoom Out</button>
-      <button id="resetCommit">Reset</button>
-      <button id="nextCommit">Next Commit</button>
-      <button id="previousCommit">Previous Commit</button>
-
-      <script>
-        let graphData = ${JSON.stringify(graphData)};
-        let index = 0;
-        let width = window.innerWidth, height = 600;
-
-        let svg = d3.select("svg")
-                    .attr("width", width)
-                    .attr("height", height);
-
-        let g = svg.append("g"); // Group for zooming
-
-        let zoom = d3.zoom()
-                     .scaleExtent([0.5, 5]) // Min and max zoom scale
-                     .on("zoom", (event) => g.attr("transform", event.transform));
-
-        svg.call(zoom); // Enable zoom on SVG
-
-        function buildHierarchy(nodes) {
-          let root = { name: "root", children: [] };
-          let map = { "root": root };
-
-          nodes.forEach(node => {
-            let parts = node.id.split("/");
-            let filename = parts.pop();
-            let current = root;
-
-            parts.forEach(part => {
-              if (!map[part]) {
-                let newFolder = { name: part, children: [] };
-                map[part] = newFolder;
-                current.children.push(newFolder);
-              }
-              current = map[part];
-            });
-
-            current.children.push({ name: filename, size: 1, type: "file" });
-          });
-
-          return d3.hierarchy(root).sum(d => d.size);
-        }
-
-        function updateGraph(commitData) {
-          g.selectAll("*").remove();
-          
-          // Update commit info display
-          document.getElementById("commitId").textContent = commitData.commit;
-          document.getElementById("commitMessage").textContent = commitData.message;
-          document.getElementById("author").textContent = commitData.author;
-          document.getElementById("commitDate").textContent = commitData.date;
-          let hierarchyData = buildHierarchy(commitData.nodes);
-          let pack = d3.pack().size([width - 100, height - 100]).padding(10);
-          let root = pack(hierarchyData);
-
-          const filesChangedSet = new Set(commitData.filesChanged); // Fast lookup for changed files
-          const prevFilesChangedSet = new Set(index > 0 ? graphData[index - 1].filesChanged : []); // Previous commit's files
-          const nodesLastModifiedMap = new Map();
-          commitData.nodes.forEach(node => {
-            nodesLastModifiedMap.set(node.id, node.lastModified);
-          });
-          console.log(nodesLastModifiedMap);
-          let nodes = g.selectAll("circle")
-                       .data(root.descendants())
-                       .enter().append("circle")
-                       .attr("cx", d => d.x)
-                       .attr("cy", d => d.y)
-                       .attr("r", d => d.r)
-                        .attr("fill", d => {
-                            if (!d.children) { // Only apply to file nodes
-                                let filePath = d.ancestors()
-                                                .map(a => a.data.name)
-                                                .filter(name => name !== "root") // Fix root issue
-                                                .reverse()  // Fix order
-                                                .join("/");
-
-                                if (filesChangedSet.has(filePath)) {
-                                    return prevFilesChangedSet.has(filePath) ? "red" : "green";  // New files in green
-                                }
-                                return "#007acc"; // Default color for unchanged files
-                            }
-                            return "none"; // Keep folders transparent
-                        })
-                       .attr("stroke", "white");
-
-          // Create labels but keep them hidden initially
-          let labels = g.selectAll("text")
-                        .data(root.descendants())
-                        .enter().append("text")
-                        .attr("x", d => d.x)
-                        .attr("y", d => d.y - d.r - 5)
-                        .text(d => d.data.name)
-                        .attr("fill", "white")
-                        .attr("font-size", "12px")
-                        .attr("text-anchor", "middle")
-                        .style("opacity", 0);  // Hide labels initially
-
-          // Show label on hover
-          nodes.on("mouseover", function(event, d) {
-            // Find the corresponding label and show it
-            d3.select(this).style("cursor", "pointer");
-            labels.filter(l => l.data.name === d.data.name)
-                  .transition().duration(200)
-                  .style("opacity", 1);  // Fade in the label
-          });
-
-          
-          nodes.on("click", function(event, d) {
-            if (!d.children){
-              const filePath = d.ancestors()
-                .map(a => a.data.name)
-                .filter(name => name !== "root") 
-                .reverse() 
-                .join("/");
-              index = nodesLastModifiedMap.get(filePath);
-              console.log("Clicked file:", filePath, "Index:", index);
-              updateGraph(graphData[index]);
-            }
-          });
-
-
-          // Hide label on mouseout
-          nodes.on("mouseout", function(event, d) {
-            // Hide the label when the mouse leaves
-            labels.filter(l => l.data.name === d.data.name)
-                  .transition().duration(200)
-                  .style("opacity", 0);  // Fade out the label
-          });
-        }
-
-        function nextCommit() {
-          if (index < graphData.length) {
-            index++;
-            updateGraph(graphData[index]);
-          }
-        }
-
-        function previousCommit() {
-          if (index >= 0) {
-            index--;
-            updateGraph(graphData[index]);
-          }
-        }
-
-        function zoomIn() {
-          svg.transition().call(zoom.scaleBy, 1.2);
-        }
-
-        function zoomOut() {
-          svg.transition().call(zoom.scaleBy, 0.8);
-        }
-
-        function resetCommit() {
-          index=0;
-          updateGraph(graphData[index]);
-        }
-
-        document.getElementById("nextCommit").addEventListener("click", nextCommit);
-        document.getElementById("previousCommit").addEventListener("click", previousCommit);
-        document.getElementById("zoomIn").addEventListener("click", zoomIn);
-        document.getElementById("zoomOut").addEventListener("click", zoomOut);
-        document.getElementById("resetCommit").addEventListener("click", resetCommit);
-        
-        nextCommit(); // Show first commit initially
-      </script>
-    </body>
-    </html>`;
+  registerVisualize(context);
 }
 function getWebviewContentGitLog(logDetails) {
   const logsHtml = logDetails.map(
