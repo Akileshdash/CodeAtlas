@@ -15,31 +15,31 @@
     "commands": [
       {
         "command": "CodeAtlas.helloWorld",
-        "title": "Hello World"
+        "title": "CodeAtlas: Hello World"
       },
       {
         "command": "CodeAtlas.getGitLog",
-        "title": "Get Git Log"
+        "title": "CodeAtlas: Get Git Log"
       },
       {
         "command": "CodeAtlas.visualizeGit",
-        "title": "Visualize Git"
+        "title": "CodeAtlas: Visualize Git"
       },
       {
         "command": "CodeAtlas.getIssues",
-        "title": "Git Issues"
+        "title": "CodeAtlas: Git Issues"
       },
       {
         "command": "CodeAtlas.getEnhancedInsights",
-        "title": "Get Enhanced Insights"
+        "title": "CodeAtlas: Get Enhanced Insights"
       },
       {
         "command": "CodeAtlas.hotspotAnalysis",
-        "title": "Hotspot Analysis"
+        "title": "CodeAtlas: Hotspot Analysis"
       },
       {
         "command": "CodeAtlas.showGitBlame",
-        "title": "Line Analysis"
+        "title": "CodeAtlas: Line Analysis"
       }
     ],
     "keybindings": [
