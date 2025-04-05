@@ -103,7 +103,13 @@ async function fetchCommitData(
   for (const file of allFiles) {
     let node = { id: file, label: file, lastModified: 0 };
     try {
-      const output = await git.raw(["log", "-1", `${commitHash}`, `${file}`]);
+      const output = await git.raw([
+        "log",
+        "-1",
+        `${commitHash}`,
+        "--",
+        `${file}`,
+      ]);
       const lastCommit = output.split("\n")[0].split(" ")[1].trim();
       node.lastModified = Number(commitMap.get(lastCommit) || index);
     } catch (error) {
