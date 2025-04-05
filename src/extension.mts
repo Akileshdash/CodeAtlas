@@ -49,12 +49,16 @@ export function activate(context: vscode.ExtensionContext) {
           author: string;
           files: string[]; // Changed files
           allFiles: string[]; // All files present in that commit
+          lastModified: Number[]; // Last modified commit for each file
         }[] = [];
 
         let graphData = [];
         let fileMap = new Map(); // Tracks file nodes
+        let commitIndexMap = new Map(); // Maps commit hashes to indices
 
+        let commitIndex = 0; // Tracks the current commit index
         for (const entry of [...log.all].reverse()) {
+          commitIndexMap.set(entry.hash, commitIndex++); // Map commit hash to index
           const commitHash = entry.hash;
           const commitDetails = await git.show([commitHash, "--name-only"]);
 
@@ -76,16 +80,7 @@ export function activate(context: vscode.ExtensionContext) {
             .map((file) => file.trim())
             .filter((file) => file !== "");
 
-          logDetails.push({
-            hash: commitHash.substring(0, 7),
-            message: entry.message,
-            date: entry.date,
-            author: entry.author_name,
-            files: filesChanged,
-            allFiles: allFiles, // Save all files at that commit
-          });
-
-          let nodes: { id: string; label: string }[] = [];
+          let nodes: { id: string; label: string; lastModified: Number }[] = [];
 
           let edges = [];
 
@@ -93,7 +88,22 @@ export function activate(context: vscode.ExtensionContext) {
             if (!fileMap.has(file)) {
               fileMap.set(file, { id: file, label: file });
             }
-            nodes.push(fileMap.get(file));
+            let node = { ...fileMap.get(file), lastModified: 0 };
+            try {
+              git
+                .raw(["log", "-1", `${commitHash}`, `${file}`])
+                .then((output) => {
+                  const lastCommit = output.split("\n")[0].split(" ")[1].trim();
+                  node.lastModified = commitIndexMap.get(lastCommit);
+                });
+            } catch (error) {
+              console.error(
+                `Error fetching last modified commit for ${file}:`,
+                error
+              );
+              node.lastModified = commitIndex - 1; // Fallback to current index
+            }
+            nodes.push(node);
           });
 
           for (let i = 0; i < allFiles.length - 1; i++) {
@@ -518,6 +528,11 @@ function getWebviewContentVisualize(
 
           const filesChangedSet = new Set(commitData.filesChanged); // Fast lookup for changed files
           const prevFilesChangedSet = new Set(index > 0 ? graphData[index - 1].filesChanged : []); // Previous commit's files
+          const nodesLastModifiedMap = new Map();
+          commitData.nodes.forEach(node => {
+            nodesLastModifiedMap.set(node.id, node.lastModified);
+          });
+          console.log(nodesLastModifiedMap);
           let nodes = g.selectAll("circle")
                        .data(root.descendants())
                        .enter().append("circle")
@@ -561,6 +576,20 @@ function getWebviewContentVisualize(
                   .transition().duration(200)
                   .style("opacity", 1);  // Fade in the label
           });
+
+          
+          nodes.on("click", function(event, d) {
+            if (!d.children){
+              const filePath = d.ancestors()
+                .map(a => a.data.name)
+                .filter(name => name !== "root") 
+                .reverse() 
+                .join("/");
+              index = nodesLastModifiedMap.get(filePath);
+              updateGraph(graphData[index]);
+            }
+          });
+
 
           // Hide label on mouseout
           nodes.on("mouseout", function(event, d) {

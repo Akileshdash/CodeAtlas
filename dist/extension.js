@@ -9436,7 +9436,6 @@ function parseBlameOutput(blameOutput) {
     const metadata = metadataMap[lineNumber];
     finalMetadataMap[lineNumber] = `${metadata.author}${metadata.timestamp}${metadata.summary}`;
   }
-  console.log("Final Metadata Map", finalMetadataMap);
   return finalMetadataMap;
 }
 
@@ -9467,7 +9466,10 @@ function activate(context) {
         const logDetails = [];
         let graphData = [];
         let fileMap = /* @__PURE__ */ new Map();
+        let commitIndexMap = /* @__PURE__ */ new Map();
+        let commitIndex = 0;
         for (const entry of [...log.all].reverse()) {
+          commitIndexMap.set(entry.hash, commitIndex++);
           const commitHash = entry.hash;
           const commitDetails = await git.show([commitHash, "--name-only"]);
           const filesChanged = commitDetails.split("\n").slice(5).filter((line) => line.trim() !== "");
@@ -9478,23 +9480,28 @@ function activate(context) {
             commitHash
           ]);
           const allFiles = allFilesOutput.split("\n").map((file) => file.trim()).filter((file) => file !== "");
-          logDetails.push({
-            hash: commitHash.substring(0, 7),
-            message: entry.message,
-            date: entry.date,
-            author: entry.author_name,
-            files: filesChanged,
-            allFiles
-            // Save all files at that commit
-          });
           let nodes = [];
           let edges = [];
           allFiles.forEach((file) => {
             if (!fileMap.has(file)) {
               fileMap.set(file, { id: file, label: file });
             }
-            nodes.push(fileMap.get(file));
+            let node = { ...fileMap.get(file), lastModified: 0 };
+            try {
+              git.raw(["log", "-1", `${commitHash}`, `${file}`]).then((output) => {
+                const lastCommit = output.split("\n")[0].split(" ")[1].trim();
+                node.lastModified = commitIndexMap.get(lastCommit);
+              });
+            } catch (error) {
+              console.error(
+                `Error fetching last modified commit for ${file}:`,
+                error
+              );
+              node.lastModified = commitIndex - 1;
+            }
+            nodes.push(node);
           });
+          console.log(nodes);
           for (let i = 0; i < allFiles.length - 1; i++) {
             for (let j = i + 1; j < allFiles.length; j++) {
               edges.push({ source: allFiles[i], target: allFiles[j] });
@@ -9828,6 +9835,11 @@ function getWebviewContentVisualize(graphData) {
 
           const filesChangedSet = new Set(commitData.filesChanged); // Fast lookup for changed files
           const prevFilesChangedSet = new Set(index > 0 ? graphData[index - 1].filesChanged : []); // Previous commit's files
+          const nodesLastModifiedMap = new Map();
+          commitData.nodes.forEach(node => {
+            nodesLastModifiedMap.set(node.id, node.lastModified);
+          });
+          console.log(nodesLastModifiedMap);
           let nodes = g.selectAll("circle")
                        .data(root.descendants())
                        .enter().append("circle")
@@ -9871,6 +9883,21 @@ function getWebviewContentVisualize(graphData) {
                   .transition().duration(200)
                   .style("opacity", 1);  // Fade in the label
           });
+
+          
+          nodes.on("click", function(event, d) {
+            if (!d.children){
+              const filePath = d.ancestors()
+                .map(a => a.data.name)
+                .filter(name => name !== "root") 
+                .reverse() 
+                .join("/");
+              index = nodesLastModifiedMap.get(filePath);
+              console.log("Clicked file:", filePath, "Index:", index);
+              updateGraph(graphData[index]);
+            }
+          });
+
 
           // Hide label on mouseout
           nodes.on("mouseout", function(event, d) {
