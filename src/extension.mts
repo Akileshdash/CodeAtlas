@@ -748,109 +748,146 @@ function getWebviewContentGitLog(
     files: string[];
   }[]
 ): string {
-  const logsHtml = logDetails
+  const logsData = JSON.stringify(logDetails);
+  const numCommits = logDetails.length;
+
+  // Generate dot markers on the slider
+  const tickDots = logDetails
     .map(
-      (log) => `
-        <div class="timeline-item">
-            <div class="timeline-icon"></div>
-            <div class="timeline-content">
-                <h3>${log.message} <span class="hash">(${log.hash})</span></h3>
-                <p>${log.date} by <b>${log.author}</b></p>
-                <button class="toggle-btn" onclick="toggleFiles('${
-                  log.hash
-                }')">Show Files</button>
-                <ul id="${log.hash}" class="file-list" style="display: none;">
-                    ${log.files.map((file) => `<li>${file}</li>`).join("")}
-                </ul>
-            </div>
-        </div>
-    `
+      (_log, i) => `
+        <div class="dot-marker" style="left: ${(i / (numCommits - 1)) * 100}%"></div>
+      `
     )
     .join("");
 
   return `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <style>
-                body { 
-                    font-family: Arial, sans-serif; 
-                    padding: 20px; 
-                    background-color: black;
-                }
-                .timeline {
-                    position: relative;
-                    margin: 0 auto;
-                    padding: 20px;
-                    max-width: 800px;
-                }
-                .timeline-item {
-                    position: relative;
-                    margin-bottom: 20px;
-                    padding-left: 30px;
-                }
-                .timeline-item::before {
-                    content: '';
-                    position: absolute;
-                    left: 7px;
-                    top: 0;
-                    width: 4px;
-                    height: 100%;
-                    background:rgb(38, 166, 252);
-                }
-                .timeline-icon {
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    width: 15px;
-                    height: 15px;
-                    background-color: #007acc;
-                    border: 3px solid #ffffff;
-                    border-radius: 50%;
-                    z-index: 1;
-                }
-                .timeline-content {
-                    background:rgb(36, 36, 36);
-                    border-radius: 6px;
-                    padding: 10px 15px;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                }
-                .hash { color: #007acc; }
-                .file-list { 
-                    margin-top: 5px; 
-                    padding-left: 20px; 
-                    list-style-type: none; 
-                    border-left: 2px solid #007acc;
-                    margin-left: 10px;
-                    padding-left: 10px;
-                }
-                .toggle-btn {
-                    background: #007acc;
-                    color: white;
-                    border: none;
-                    padding: 5px 10px;
-                    cursor: pointer;
-                    border-radius: 4px;
-                    margin-top: 5px;
-                }
-                .toggle-btn:hover { background: #005f99; }
-            </style>
-        </head>
-        <body>
-            <h1>Git Commit Timeline</h1>
-            <div class="timeline">
-                ${logsHtml}
-            </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          padding: 20px;
+          background-color: #121212;
+          color: #f0f0f0;
+        }
 
-            <script>
-                function toggleFiles(hash) {
-                    const fileList = document.getElementById(hash);
-                    fileList.style.display = fileList.style.display === 'none' ? 'block' : 'none';
-                }
-            </script>
-        </body>
-        </html>
-    `;
+        h1 {
+          color: #00bcd4;
+        }
+
+        .slider-container {
+          margin-top: 40px;
+          position: relative;
+          height: 60px;
+        }
+
+        .range-wrapper {
+          position: relative;
+          height: 20px;
+        }
+
+        input[type="range"] {
+          width: 100%;
+          margin: 1;
+          background: transparent;
+          z-index: 2;
+          position: absolute;
+        }
+
+        .slider-track {
+          position: absolute;
+          top: 10px;
+          left: 0;
+          margin-left: 2;
+          height: 6px;
+          width: 100%;
+          background: #444;
+          border-radius: 2px;
+          z-index: 1;
+        }
+
+        .dot-marker {
+          position: absolute;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: 10px;
+          height: 10px;
+          background-color: #00bcd4;
+          border-radius: 50%;
+          z-index: 3;
+        }
+
+        .commit-display {
+          background: #1e1e1e;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+          margin-top: 30px;
+        }
+
+        .hash {
+          color: #00bcd4;
+        }
+
+        .file-list {
+          list-style: none;
+          padding-left: 20px;
+          margin-top: 10px;
+          border-left: 2px solid #00bcd4;
+        }
+
+        .file-list li {
+          margin: 5px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <h1>Git Commit Timeline</h1>
+
+      <div class="slider-container">
+        <div class="range-wrapper">
+          <div class="slider-track"></div>
+          ${tickDots}
+          <input type="range" id="commitRange" min="0" max="${numCommits - 1}" value="0" step="1" />
+        </div>
+        <p>Showing commit <span id="commitIndex">1</span> of ${numCommits}</p>
+      </div>
+
+      <div class="commit-display" id="commitDetails">
+        <!-- Commit details will appear here -->
+      </div>
+
+      <script>
+        const logs = ${logsData};
+        const range = document.getElementById("commitRange");
+        const commitIndex = document.getElementById("commitIndex");
+        const commitDetails = document.getElementById("commitDetails");
+
+        function updateCommitDisplay(index) {
+          const log = logs[index];
+          commitIndex.textContent = parseInt(index) + 1;
+
+          const fileList = log.files.map(file => \`<li>\${file}</li>\`).join("");
+
+          commitDetails.innerHTML = \`
+            <h2>\${log.message} <span class="hash">(\${log.hash})</span></h2>
+            <p><b>\${log.author}</b> — \${log.date}</p>
+            <h4>Files Changed:</h4>
+            <ul class="file-list">\${fileList}</ul>
+          \`;
+        }
+
+        range.addEventListener("input", (e) => {
+          updateCommitDisplay(e.target.value);
+        });
+
+        // Initialize
+        updateCommitDisplay(0);
+      </script>
+    </body>
+    </html>
+  `;
 }
 
 function getWebviewContentInsights(data: any) {
