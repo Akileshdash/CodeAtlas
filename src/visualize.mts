@@ -143,11 +143,13 @@ function getWebviewContentVisualize(
       <html>
       <head>
         <script src="https://d3js.org/d3.v6.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
           body { background: black; color: white; text-align: center; font-family: Arial; }
           svg { width: 100%; height: 600px; border: 1px solid white; }
           button { background: #007acc; color: white; border: none; padding: 10px; margin: 5px; cursor: pointer; }
           text { pointer-events: none; }
+          canvas { max-width: 100%; background: #1e1e1e; padding: 10px; border-radius: 8px; margin-top: 20px; }
         </style>
       </head>
       <body>
@@ -165,6 +167,8 @@ function getWebviewContentVisualize(
         <button id="resetCommit">Reset</button>
         <button id="nextCommit">Next Commit</button>
         <button id="previousCommit">Previous Commit</button>
+        <h2>Hotspot Files (Frequent Changes)</h2>
+        <canvas id="hotspotChart"></canvas>
   
         <script>
           let graphData = ${JSON.stringify(graphData)};
@@ -234,6 +238,7 @@ function getWebviewContentVisualize(
             commitData.nodes.forEach(node => {
               nodesLastModifiedMap.set(node.id, node.lastModified);
             });
+
             console.log(nodesLastModifiedMap);
             let nodes = g.selectAll("circle")
                          .data(root.descendants())
@@ -300,6 +305,7 @@ function getWebviewContentVisualize(
                     .transition().duration(200)
                     .style("opacity", 0);  // Fade out the label
             });
+            updateHotspotChart(index);
           }
   
           function nextCommit() {
@@ -337,6 +343,52 @@ function getWebviewContentVisualize(
           document.getElementById("zoomOut").addEventListener("click", zoomOut);
           document.getElementById("resetCommit").addEventListener("click", resetCommit);
           
+          let hotspotChart;
+          function updateHotspotChart(commitIndex) {
+            const fileChangeCounts = {}; 
+            for (let i = 0; i <= commitIndex; i++) {
+              graphData[i].filesChanged.forEach(file => {
+                fileChangeCounts[file] = (fileChangeCounts[file] || 0) + 1;
+              });
+            }
+
+            const sortedFiles = Object.entries(fileChangeCounts).sort(([, a], [, b]) => b - a);
+            const labels = sortedFiles.map(([file]) => file);
+            const values = sortedFiles.map(([, count]) => count);
+
+            const ctx = document.getElementById('hotspotChart').getContext('2d');
+
+            if (hotspotChart) {
+              hotspotChart.destroy();
+            }
+
+            hotspotChart = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [{
+                  label: 'File Change Frequency',
+                  data: values,
+                  backgroundColor: 'rgba(0, 255, 204, 0.8)',
+                  borderColor: '#00ffcc',
+                  borderWidth: 3,
+                  hoverBackgroundColor: '#ffcc00',
+                  hoverBorderColor: '#ff6600',
+                }]
+              },
+              options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: {
+                  x: { ticks: { color: '#ffffff' }, grid: { color: '#444444' }, beginAtZero: true },
+                  y: { ticks: { color: '#ffffff' }, grid: { color: '#444444' } }
+                },
+                plugins: { legend: { labels: { color: '#ffffff' } } },
+                elements: { bar: { borderWidth: 3, hoverBorderWidth: 5 } }
+              }
+            });
+          }
+
           updateGraph(graphData[index]); 
         </script>
       </body>

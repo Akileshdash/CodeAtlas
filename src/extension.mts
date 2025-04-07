@@ -559,9 +559,7 @@ function getWebviewContentInsights(data: any) {
   `;
 }
 
-function getWebviewContentHotspot(
-  fileChangeCounts: Record<string, number>
-): string {
+function getWebviewContentHotspot(fileChangeCounts: Record<string, number>): string {
   const sortedFiles = Object.entries(fileChangeCounts).sort(
     (a, b) => b[1] - a[1]
   );
