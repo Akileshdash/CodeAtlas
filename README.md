@@ -19,11 +19,6 @@ Once the vscode window is opened, open a git-initialized folder or any other git
 
 ## Features  
 
-### Hello World  
-- **Command:** ```CodeAtlas: HelloWorld```
-- **Shortcut:** ```Ctrl+Shift+H```
-- Displays a simple message in VS Code.  
----
 ### Git Log Viewer  
 - **Command:** `CodeAtlas: Get Git Log`  
 - **Shortcut:** `Ctrl+Shift+G`  
@@ -65,6 +60,7 @@ Once the vscode window is opened, open a git-initialized folder or any other git
 - Identifies frequently changed files in the repository, highlighting potential hotspots that might require attention.
 
 ![image](https://github.com/user-attachments/assets/c9103eb2-7a2a-4068-8c3a-47277fb8c124)
+
 ---
 
 ### Line Analysis 
