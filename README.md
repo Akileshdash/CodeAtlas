@@ -1,71 +1,52 @@
-# CodeAtlas README
+# CodeAtlas  
 
-This is the README for your extension "CodeAtlas". After writing up a brief description, we recommend including the following sections.
+CodeAtlas is a Visual Studio Code extension designed to provide insights into Git repositories, analyze commit history, and visualize code changes efficiently. It integrates Git logs, contributor statistics, hotspot analysis, and GitHub issue tracking into the editor.  
 
-## Features
+## Features  
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+### Hello World  
+- **Command:** `CodeAtlas.helloWorld`  
+- **Shortcut:** `Ctrl+Shift+H`  
+- Displays a simple message in VS Code.  
 
-For example if there is an image subfolder under your extension project workspace:
+### Git Log Viewer  
+- **Command:** `CodeAtlas.getGitLog`  
+- **Shortcut:** `Ctrl+Shift+G`  
+- Fetches and displays the commit history in a timeline format. Shows commit details, including hash, message, author, date, and modified files.  
 
-\!\[feature X\]\(images/feature-x.png\)
+### Git Visualization  
+- **Command:** `CodeAtlas.visualizeGit`  
+- **Shortcut:** `Ctrl+Shift+V`  
+- Provides a graphical visualization of the repository’s Git history and commit relationships.  
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+### GitHub Issues Fetcher  
+- **Command:** `CodeAtlas.getIssues`  
+- **Shortcut:** `Ctrl+Shift+S`  
+- Retrieves open issues from the linked GitHub repository and displays them within VS Code.  
 
-## Requirements
+### Project Insights  
+- **Command:** `CodeAtlas.getEnhancedInsights`  
+- **Shortcut:** `Ctrl+Shift+E`  
+- Analyzes repository data, providing statistics on contributors, languages used, total commits, commit frequency, and repository history.  
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+### Hotspot Analysis  
+- **Command:** `CodeAtlas.hotspotAnalysis`  
+- **Shortcut:** `Ctrl+Shift+A`  
+- Identifies frequently changed files in the repository, highlighting potential hotspots that might require attention.  
 
-## Extension Settings
+## Installation  
+1. Clone or download this repository.  
+2. Open the project in VS Code.  
+3. Run `npm install` to install dependencies.  
+4. Compile the code using `node esbuild.js`.
+5.. Start debugging (`F5`) to launch the extension in a new VS Code window.  
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+## Usage  
+Once installed, use the shortcuts or the command palette (`Ctrl+Shift+P`) to execute CodeAtlas commands.  
 
-For example:
+## Requirements  
+- Git must be installed and accessible from the command line.  
+- For GitHub integration, authentication may be required.  
 
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+## License  
+This project is licensed under the MIT License.  
