@@ -1,12 +1,27 @@
 # CodeAtlas  
 
 CodeAtlas is a Visual Studio Code extension designed to provide insights into Git repositories, analyze commit history, and visualize code changes efficiently. It integrates Git logs, contributor statistics, hotspot analysis, and GitHub issue tracking into the editor.  
+---
+## Installation  
+1. Clone or download this repository : ```git clone https://github.com/Akileshdash/CodeAtlas ```
+2. Open the project in VS Code.  
+3. Run ```npm install``` to install dependencies.  
+4. Compile the code using ```npm run compile``` or ```node esbuild.js```
+5. Press (`F5`) to launch the extension in a new VS Code window.  
+
+## Usage  
+Once the vsc window is opened, open a git initialized folder or any other git repo in this extension installed vscode window. Then use the shortcuts for the command palette (```Ctrl+Shift+P```) in windows/linux or (```Cmd+Shift+P```) in mac to run the CodeAtlas commands.
+
+## Requirements  
+- Git must be installed and accessible from the command line.
+- The workspace folder must be Git Initialized
+- For GitHub integration, authentication is be required.  
 
 ## Features  
 
 ### Hello World  
-- **Command:** `CodeAtlas: HelloWorld`  
-- **Shortcut:** `Ctrl+Shift+H`  
+- **Command:** ```CodeAtlas: HelloWorld```
+- **Shortcut:** ```Ctrl+Shift+H```
 - Displays a simple message in VS Code.  
 ---
 ### Git Log Viewer  
@@ -59,21 +74,5 @@ CodeAtlas is a Visual Studio Code extension designed to provide insights into Gi
 ![image](https://github.com/user-attachments/assets/33109d15-3710-471b-9e6f-4c157ca86089)
 
 ---
-## Installation  
-1. Clone or download this repository.  
-2. Open the project in VS Code.  
-3. Run `npm install` to install dependencies.  
-4. Compile the code using `node esbuild.js` or `npm run compile`.
-5.. Start debugging (`F5`) to launch the extension in a new VS Code window.  
-
-## Usage  
-Once installed, use the shortcuts or the command palette (`Ctrl+Shift+P`) to execute CodeAtlas commands in the opened editor.  
-
-## Requirements  
-- Git must be installed and accessible from the command line.
-- The workspace folder must be Git Initialized
-- For GitHub integration, authentication is be required.  
-
-## License  
-This project is licensed under the MIT License.
-
+## Team Members : 
+[Akilesh](https://github.com/Akileshdash), [Shivadhashan S](https://github.com/Shiva9361), [Aniket Johri](https://github.com/Error-404-NotFound), [Jaimin Viramgama](https://github.com/i-apex), [Siddhant Chatse](https://github.com/sid1309), [Vineeth](https://github.com/VINEETH1425)
