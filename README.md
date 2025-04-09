@@ -3,19 +3,19 @@
 CodeAtlas is a Visual Studio Code extension designed to provide insights into Git repositories, analyze commit history, and visualize code changes efficiently. It integrates Git logs, contributor statistics, hotspot analysis, and GitHub issue tracking into the editor.  
 ---
 ## Installation  
-1. Clone or download this repository : ```git clone https://github.com/Akileshdash/CodeAtlas ```
+1. Clone or download this repository: ```git clone https://github.com/Akileshdash/CodeAtlas ```
 2. Open the project in VS Code.  
 3. Run ```npm install``` to install dependencies.  
 4. Compile the code using ```npm run compile``` or ```node esbuild.js```
 5. Press (`F5`) to launch the extension in a new VS Code window.  
 
 ## Usage  
-Once the vsc window is opened, open a git initialized folder or any other git repo in this extension installed vscode window. Then use the shortcuts for the command palette (```Ctrl+Shift+P```) in windows/linux or (```Cmd+Shift+P```) in mac to run the CodeAtlas commands.
+Once the vscode window is opened, open a git-initialized folder or any other git repo in this extension-installed vscode window. Then, use the shortcuts for the command palette (```Ctrl+Shift+P```) in Windows/Linux or (```Cmd+Shift+P```) in Mac to run the CodeAtlas commands.
 
 ## Requirements  
 - Git must be installed and accessible from the command line.
 - The workspace folder must be Git Initialized
-- For GitHub integration, authentication is be required.  
+- For GitHub integration, authentication is required.  
 
 ## Features  
 
@@ -69,6 +69,7 @@ Once the vsc window is opened, open a git initialized folder or any other git re
 
 ### Line Analysis 
 - **Command:** `CodeAtlas: Line Analysis`
+- Run it with a file open 
 - Gets the last modified commit data for each line and shows it in a digestible manner by consolidating and showing one decoration for a block of code modified in a single commit.
 
 ![image](https://github.com/user-attachments/assets/33109d15-3710-471b-9e6f-4c157ca86089)
