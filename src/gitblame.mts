@@ -134,7 +134,7 @@ function parseBlameOutput(blameOutput: string): Record<number, string> {
   const lines = blameOutput.split("\n");
 
   const metadataMap: Record<number, BlameMetadata> = {};
-  let currentLineNumber = 1;
+  let currentLineNumber = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];

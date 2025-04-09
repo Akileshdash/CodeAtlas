@@ -9396,7 +9396,7 @@ function applyBlameDecorations(editor, blameData, decorationType) {
 function parseBlameOutput(blameOutput) {
   const lines = blameOutput.split("\n");
   const metadataMap = {};
-  let currentLineNumber = 1;
+  let currentLineNumber = 0;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!metadataMap[currentLineNumber]) {
