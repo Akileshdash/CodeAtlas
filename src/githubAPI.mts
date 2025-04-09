@@ -53,7 +53,7 @@ export function registerIssues(context: vscode.ExtensionContext) {
           vscode.ViewColumn.One,
           { enableScripts: true }
         );
-
+        // Updating data as per request
         panel.webview.onDidReceiveMessage((message) => {
           switch (message.command) {
             case "fetch": {

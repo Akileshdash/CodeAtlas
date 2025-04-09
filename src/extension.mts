@@ -1,5 +1,3 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 import { simpleGit } from "simple-git";
 import * as path from "path";
@@ -8,13 +6,27 @@ import { registerGitBlame } from "./gitblame.mjs";
 import { registerVisualize } from "./visualize.mjs";
 
 type Contributor = {
+  /**
+   * @params {string} count - The number of commits made by the contributor.
+   * @description This property stores the count of commits made by the contributor.
+   */
   count: string;
   name: string;
 };
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+  /**
+   * @params {vscode.ExtensionContext} context - The extension context provided by VSCode.
+   * @returns {void}
+   * @description This function is called when the extension is activated.
+   * It registers several commands for the extension, including:
+   * - "CodeAtlas.helloWorld": Displays a hello world message.
+   * - "CodeAtlas.getGitLog": Fetches and displays Git commit logs in a webview.
+   * - "CodeAtlas.getEnhancedInsights": Fetches and displays project insights in a webview.
+   * - "CodeAtlas.hotspotAnalysis": Analyzes and displays file change hotspots in a webview.
+   * - "CodeAtlas.getIssues": Fetches and displays GitHub issues in a webview.
+   * - "CodeAtlas.visualize": Visualizes the project structure in a webview.
+   */
   console.log("CodeAtlas is now active!");
 
   const disposableHelllo = vscode.commands.registerCommand(
@@ -330,6 +342,11 @@ function getWebviewContentGitLog(
     files: string[];
   }[]
 ): string {
+  /**
+   * @params {Array} logDetails - An array of log details containing commit information.
+   * @returns {string} - The HTML content for the webview displaying the commit logs.
+   * @description This function generates the HTML content for the webview that displays the commit logs.
+   */
   const logsHtml = logDetails
     .map(
       (log) => `
@@ -444,7 +461,11 @@ function getWebviewContentInsights(data: any) {
     firstCommit,
     latestCommit,
   } = data;
-
+  /**
+   * @params {Object} data - The data object containing project insights.
+   * @returns {string} - The HTML content for the webview displaying project insights.
+   * @description This function generates the HTML content for the webview that displays project insights.
+   */
   const contributorsList = contributors
     .map(
       (contrib: Contributor) =>
@@ -559,7 +580,14 @@ function getWebviewContentInsights(data: any) {
   `;
 }
 
-function getWebviewContentHotspot(fileChangeCounts: Record<string, number>): string {
+function getWebviewContentHotspot(
+  fileChangeCounts: Record<string, number>
+): string {
+  /**
+   * @params {Object} fileChangeCounts - An object containing file names and their respective change counts.
+   * @returns {string} - The HTML content for the webview displaying hotspot analysis.
+   * @description This function generates the HTML content for the webview that displays hotspot analysis.
+   */
   const sortedFiles = Object.entries(fileChangeCounts).sort(
     (a, b) => b[1] - a[1]
   );

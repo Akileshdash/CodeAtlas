@@ -7,6 +7,12 @@ import {
 } from "simple-git";
 
 export function registerVisualize(context: vscode.ExtensionContext) {
+  /**
+   * @params {vscode.ExtensionContext} context - The extension context provided by VSCode.
+   * @returns {void}
+   * @description Registers a command to visualize Git history as a graph.
+   * The command is registered under the name "CodeAtlas.visualizeGit".
+   */
   const disposableVisualize = vscode.commands.registerCommand(
     "CodeAtlas.visualizeGit",
     async () => {
@@ -80,6 +86,14 @@ async function fetchCommitData(
   commitMap: Map<string, Number>,
   index: number = 0
 ) {
+  /**
+   * @param git - The SimpleGit instance for executing Git commands.
+   * @param commit - The commit object containing commit details.
+   * @param commitMap - A map to store commit hashes and their corresponding indices.
+   * @param index - The index of the commit in the log.
+   * @returns {Promise<{ commit: string; date: string; author: string; message: string; filesChanged: string[]; nodes: { id: string; label: string; lastModified: Number }[] }>} - A promise that resolves to an object containing commit details and file changes.
+   * @description This function fetches the commit data, including the commit hash, date, author, message, files changed, and nodes representing the files in the commit.
+   */
   const commitHash = commit.hash;
   const commitDetails = await git.show([commitHash, "--name-only"]);
 
@@ -138,6 +152,11 @@ function getWebviewContentVisualize(
     filesChanged: string[];
   }[]
 ) {
+  /**
+   * @param graphData - An array of objects containing commit data.
+   * @returns {string} - The HTML content for the webview.
+   * @description This function generates the HTML content for the webview, including the D3.js graph and buttons for navigation.
+   */
   return `
       <!DOCTYPE html>
       <html>

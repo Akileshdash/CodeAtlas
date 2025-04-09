@@ -7,7 +7,7 @@ function findGitRoot(filePath: string): string | null {
   /**
    * @param filePath - The path to the file for which to find the Git root.
    * @returns The root directory of the Git repository, or null if not found.
-   * Find the root directory of the Git repository for the given file path.
+   * @description Find the root directory of the Git repository for the given file path.
    */
   let dir = path.dirname(filePath);
   while (dir !== path.parse(dir).root) {
@@ -23,7 +23,7 @@ export function registerGitBlame(context: vscode.ExtensionContext) {
   /**
    * @param context - The extension context.
    * @returns {void}
-   * This function registers a command that, when executed, retrieves the Git blame information for the currently active file in the editor.
+   * @description This function registers a command that, when executed, retrieves the Git blame information for the currently active file in the editor.
    */
   const decorationType = vscode.window.createTextEditorDecorationType({
     after: {
@@ -83,7 +83,7 @@ function applyBlameDecorations(
    * @param blameData - The parsed Git blame data.
    * @param decorationType - The decoration type for the blame information.
    * @returns {void}
-   * This function applies the blame decorations to the editor based on the provided blame data.
+   * @description This function applies the blame decorations to the editor based on the provided blame data.
    */
   const decorations: vscode.DecorationOptions[] = [];
 
@@ -129,7 +129,7 @@ function parseBlameOutput(blameOutput: string): Record<number, string> {
   /**
    * @param blameOutput - The output of the git blame command.
    * @returns {Record<number, string>} - A mapping of line numbers to blame metadata.
-   * This function parses the output of the git blame command and returns a mapping of line numbers to blame metadata.
+   * @decription This function parses the output of the git blame command and returns a mapping of line numbers to blame metadata.
    */
   const lines = blameOutput.split("\n");
 
