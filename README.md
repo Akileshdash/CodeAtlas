@@ -72,4 +72,4 @@ Once the vscode window is opened, open a git-initialized folder or any other git
 
 ---
 ## Team Members : 
-[Akilesh](https://github.com/Akileshdash), [Shivadhashan S](https://github.com/Shiva9361), [Aniket Johri](https://github.com/Error-404-NotFound), [Jaimin Viramgama](https://github.com/i-apex), [Siddhant Chatse](https://github.com/sid1309), [Vineeth](https://github.com/VINEETH1425)
+[Akilesh](https://github.com/Akileshdash), [Shivadharshan S](https://github.com/Shiva9361), [Aniket Johri](https://github.com/Error-404-NotFound), [Jaimin Viramgama](https://github.com/i-apex), [Siddhant Chatse](https://github.com/sid1309), [Vineeth](https://github.com/VINEETH1425)
