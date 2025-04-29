@@ -218,6 +218,8 @@ function getWebviewContentVisualize(
                 graphData.push(event.data.data);
                 index = graphData.length - 1;
                 updateGraph(graphData[index]);
+                document.getElementById("nextCommit").disabled = false;
+                document.getElementById("previousCommit").disabled = false;
                 }
           });
   
@@ -344,7 +346,8 @@ function getWebviewContentVisualize(
                 .attr("x", width / 2).attr("y", height / 2)
                 .attr("text-anchor", "middle").style("opacity", 0.5)
                 .attr("dominant-baseline", "middle");
-    
+                document.getElementById("nextCommit").disabled = true;
+                document.getElementById("previousCommit").disabled = true;
                 vscode.postMessage({ command: "fetch", index: graphData.length });
             }
           }

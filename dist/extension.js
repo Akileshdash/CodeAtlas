@@ -9479,6 +9479,7 @@ function registerVisualize(context) {
           if (message.command === "fetch") {
             const nextCommitIndex = message.index;
             console.log("Next Commit Index:", nextCommitIndex);
+            vscode3.window.showInformationMessage("Processing Next Commit...");
             if (nextCommitIndex < log.all.length) {
               const nextCommit = log.all[log.all.length - 1 - nextCommitIndex];
               if (!CommitMap.has(nextCommit.hash)) {
@@ -9578,6 +9579,7 @@ function getWebviewContentVisualize(graphData, totalCommits) {
   
         <script>
           let graphData = ${JSON.stringify(graphData)};
+          let totalCommits = ${totalCommits};
           const vscode = acquireVsCodeApi();
           let index = 0;
           let width = window.innerWidth, height = 600;
@@ -9599,6 +9601,8 @@ function getWebviewContentVisualize(graphData, totalCommits) {
                 graphData.push(event.data.data);
                 index = graphData.length - 1;
                 updateGraph(graphData[index]);
+                document.getElementById("nextCommit").disabled = false;
+                document.getElementById("previousCommit").disabled = false;
                 }
           });
   
@@ -9720,10 +9724,13 @@ function getWebviewContentVisualize(graphData, totalCommits) {
                 updateGraph(graphData[index]);
             } else {
                 g.selectAll("*").remove();
-                g.append("text").text("Processing Next Commit...	")
+                g.append("text").text("Processing Next Commit...")
                 .attr("fill", "white").attr("font-size", "20px")
                 .attr("x", width / 2).attr("y", height / 2)
-    
+                .attr("text-anchor", "middle").style("opacity", 0.5)
+                .attr("dominant-baseline", "middle");
+                document.getElementById("nextCommit").disabled = true;
+                document.getElementById("previousCommit").disabled = true;
                 vscode.postMessage({ command: "fetch", index: graphData.length });
             }
           }
