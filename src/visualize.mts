@@ -46,12 +46,16 @@ export function registerVisualize(context: vscode.ExtensionContext) {
           { enableScripts: true }
         );
 
-        panel.webview.html = getWebviewContentVisualize([firstCommitData]);
+        panel.webview.html = getWebviewContentVisualize(
+          [firstCommitData],
+          log.all.length - 1
+        );
 
         panel.webview.onDidReceiveMessage(async (message) => {
           if (message.command === "fetch") {
             const nextCommitIndex = message.index;
             console.log("Next Commit Index:", nextCommitIndex);
+            vscode.window.showInformationMessage("Processing Next Commit...");
             if (nextCommitIndex < log.all.length) {
               const nextCommit = log.all[log.all.length - 1 - nextCommitIndex];
               if (!CommitMap.has(nextCommit.hash)) {
@@ -150,7 +154,8 @@ function getWebviewContentVisualize(
     date: string;
     author: string;
     filesChanged: string[];
-  }[]
+  }[],
+  totalCommits: Number
 ) {
   /**
    * @param graphData - An array of objects containing commit data.
@@ -191,6 +196,7 @@ function getWebviewContentVisualize(
   
         <script>
           let graphData = ${JSON.stringify(graphData)};
+          let totalCommits = ${totalCommits};
           const vscode = acquireVsCodeApi();
           let index = 0;
           let width = window.innerWidth, height = 600;
@@ -332,6 +338,13 @@ function getWebviewContentVisualize(
                 index++;
                 updateGraph(graphData[index]);
             } else {
+                g.selectAll("*").remove();
+                g.append("text").text("Processing Next Commit...")
+                .attr("fill", "white").attr("font-size", "20px")
+                .attr("x", width / 2).attr("y", height / 2)
+                .attr("text-anchor", "middle").style("opacity", 0.5)
+                .attr("dominant-baseline", "middle");
+    
                 vscode.postMessage({ command: "fetch", index: graphData.length });
             }
           }

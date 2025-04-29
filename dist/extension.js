@@ -9471,7 +9471,10 @@ function registerVisualize(context) {
           vscode3.ViewColumn.One,
           { enableScripts: true }
         );
-        panel.webview.html = getWebviewContentVisualize([firstCommitData]);
+        panel.webview.html = getWebviewContentVisualize(
+          [firstCommitData],
+          log.all.length - 1
+        );
         panel.webview.onDidReceiveMessage(async (message) => {
           if (message.command === "fetch") {
             const nextCommitIndex = message.index;
@@ -9540,7 +9543,7 @@ async function fetchCommitData(git, commit, commitMap, index = 0) {
     nodes
   };
 }
-function getWebviewContentVisualize(graphData) {
+function getWebviewContentVisualize(graphData, totalCommits) {
   return `
       <!DOCTYPE html>
       <html>
@@ -9716,6 +9719,11 @@ function getWebviewContentVisualize(graphData) {
                 index++;
                 updateGraph(graphData[index]);
             } else {
+                g.selectAll("*").remove();
+                g.append("text").text("Processing Next Commit...	")
+                .attr("fill", "white").attr("font-size", "20px")
+                .attr("x", width / 2).attr("y", height / 2)
+    
                 vscode.postMessage({ command: "fetch", index: graphData.length });
             }
           }
