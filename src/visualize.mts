@@ -30,40 +30,6 @@ export function registerVisualize(context: vscode.ExtensionContext) {
           return;
         }
 
-
-
-
-
-        
-        const logDetails: {
-          hash: string;
-          message: string;
-          date: string;
-          author: string;
-          files: string[];
-        }[] = [];
-
-        for (const entry of log.all) {
-          const commitHash = entry.hash;
-          const commitDetails = await git.show([commitHash, "--name-only"]);
-          const filesChanged = commitDetails
-            .split("\n")
-            .slice(5)
-            .filter((line) => line.trim() !== "");
-
-          logDetails.push({
-            hash: commitHash.substring(0, 7),
-            message: entry.message,
-            date: entry.date,
-            author: entry.author_name,
-            files: filesChanged,
-          });
-        }
-
-
-
-
-
         const firstCommit = log.all[log.all.length - 1];
         const CommitMap = new Map<string, Number>();
         const firstCommitData = await fetchCommitData(
@@ -82,8 +48,7 @@ export function registerVisualize(context: vscode.ExtensionContext) {
 
         panel.webview.html = getWebviewContentVisualize(
           [firstCommitData],
-          log.all.length - 1,
-          logDetails
+          log.all.length - 1
         );
 
         panel.webview.onDidReceiveMessage(async (message) => {
@@ -190,14 +155,7 @@ function getWebviewContentVisualize(
     author: string;
     filesChanged: string[];
   }[],
-  totalCommits: Number,
-  logDetails: {
-    hash: string;
-    message: string;
-    date: string;
-    author: string;
-    files: string[];
-  }[]
+  totalCommits: number
 ) {
   /**
    * @param graphData - An array of objects containing commit data.
@@ -205,19 +163,12 @@ function getWebviewContentVisualize(
    * @description This function generates the HTML content for the webview, including the D3.js graph and buttons for navigation.
    */
 
-
-  const logsData = JSON.stringify(logDetails);
-  const numCommits = logDetails.length;
-
-  // Generate dot markers on the slider
-  const tickDots = logDetails
-    .map(
-      (_log, i) => `
-        <div class="dot-marker" style="left: ${(i / (numCommits - 1)) * 100}%"></div>
-      `
-    )
-    .join("");
-
+  let tickDots = "";
+  for (let i = 0; i <= totalCommits; i++) {
+    tickDots += `<div class="dot-marker" style="left: ${
+      (i / totalCommits) * 100
+    }%"></div>`;
+  }
   return `
       <!DOCTYPE html>
       <html>
@@ -226,72 +177,72 @@ function getWebviewContentVisualize(
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <style>
           body { background: #121212; color: white; text-align: center; font-family: Arial, sans-serif; padding: 20px; color: #f0f0f0;}
-          h1 {
-            color: #00bcd4;
-          }
+           h1 {
+             color: #00bcd4;
+           }
           .slider-container {
-            margin-top: 40px;
-            position: relative;
-            height: 60px;
-          }
-
-          .range-wrapper {
-            position: relative;
-            height: 20px;
-          }
-            input[type="range"] {
-              width: 100%;
-              margin: 1;
-              background: transparent;
-              z-index: 2;
-              position: absolute;
-            }
-
-            .slider-track {
-              position: absolute;
-              top: 10px;
-              left: 0;
-              margin-left: 2;
-              height: 6px;
-              width: 100%;
-              background: #444;
-              border-radius: 2px;
-              z-index: 1;
-            }
-
-            .dot-marker {
-              position: absolute;
-              top: 50%;
-              transform: translate(-50%, -50%);
-              width: 10px;
-              height: 10px;
-              background-color: #00bcd4;
-              border-radius: 50%;
-              z-index: 3;
-            }
-
-            .commit-display {
-              background: #1e1e1e;
-              padding: 20px;
-              border-radius: 10px;
-              box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-              margin-top: 30px;
-            }
-
-            .hash {
-              color: #00bcd4;
-            }
-
-            .file-list {
-              list-style: none;
-              padding-left: 20px;
-              margin-top: 10px;
-              border-left: 2px solid #00bcd4;
-            }
-
-            .file-list li {
-              margin: 5px 0;
-            }
+             margin-top: 40px;
+             position: relative;
+             height: 60px;
+           }
+ 
+           .range-wrapper {
+             position: relative;
+             height: 20px;
+           }
+             input[type="range"] {
+               width: 100%;
+               margin: 1;
+               background: transparent;
+               z-index: 2;
+               position: relative;
+             }
+ 
+             .slider-track {
+               position: absolute;
+               top: 10px;
+               left: 0;
+               margin-left: 2;
+               height: 6px;
+               width: 100%;
+               background: #444;
+               border-radius: 2px;
+               z-index: 1;
+             }
+ 
+             .dot-marker {
+               position: absolute;
+               top: 50%;
+               transform: translate(-50%, -50%);
+               width: 10px;
+               height: 10px;
+               background-color: #00bcd4;
+               border-radius: 50%;
+               z-index: 3;
+             }
+ 
+             .commit-display {
+               background: #1e1e1e;
+               padding: 20px;
+               border-radius: 10px;
+               box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+               margin-top: 30px;
+             }
+ 
+             .hash {
+               color: #00bcd4;
+             }
+ 
+             .file-list {
+               list-style: none;
+               padding-left: 20px;
+               margin-top: 10px;
+               border-left: 2px solid #00bcd4;
+             }
+ 
+             .file-list li {
+               margin: 5px 0;
+             }
           svg { width: 100%; height: 600px; border: 1px solid white; }
           button { background: #007acc; color: white; border: none; padding: 10px; margin: 5px; cursor: pointer; }
           text { pointer-events: none; }
@@ -299,7 +250,7 @@ function getWebviewContentVisualize(
         </style>
       </head>
       <body>
-        <h2>Git Visualtion</h2>
+        <h2>Git Visualization</h2>
         <div id="commitInfo" style="position: absolute; top: 50px; left: 10px; background: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; text-align: left;">
           <strong>Commit:</strong> <span id="commitId"></span><br>
           <strong>Author:</strong> <span id="author"></span><br>
@@ -308,48 +259,31 @@ function getWebviewContentVisualize(
         </div>
         <svg></svg>
         <br>
-
-
-
-
         <button id="zoomIn">Zoom In</button>
         <button id="zoomOut">Zoom Out</button>
         <button id="resetCommit">Reset</button>
         <button id="nextCommit">Next Commit</button>
         <button id="previousCommit">Previous Commit</button>
-
-
-
         <div class="slider-container">
-          <div class="range-wrapper">
-            <div class="slider-track"></div>
-            ${tickDots}
-            <input type="range" id="commitRange" min="0" max="${numCommits - 1}" value="0" step="1" />
+           <div class="range-wrapper">
+              <div class="slider-track"></div>
+              ${tickDots}
+             <input type="range" id="commitRange" min="0" max="${totalCommits}" value="0" step="1" />
+             
+           </div>
+           <p>Showing commit <span id="commitIndex">1</span> of ${
+             totalCommits + 1
+           }    
           </div>
-          <p>Showing commit <span id="commitIndex">1</span> of ${numCommits}</p>
-        </div>
-
-
         <h2>Hotspot Files (Frequent Changes)</h2>
         <canvas id="hotspotChart"></canvas>
-
-        
-
-        <div class="commit-display" id="commitDetails">
-          <!-- Commit details will appear here -->
-        </div>
-
-
-
-
-
-
-
-
+  
         <script>
           let graphData = ${JSON.stringify(graphData)};
           let totalCommits = ${totalCommits};
           const vscode = acquireVsCodeApi();
+          const slider = document.getElementById('commitRange');
+          let previousValue = Number(slider.value);
           let index = 0;
           let width = window.innerWidth, height = 600;
   
@@ -370,9 +304,21 @@ function getWebviewContentVisualize(
                 graphData.push(event.data.data);
                 index = graphData.length - 1;
                 updateGraph(graphData[index]);
+                document.getElementById("commitIndex").textContent = index + 1;
                 document.getElementById("nextCommit").disabled = false;
                 document.getElementById("previousCommit").disabled = false;
+                slider.disabled = false;
                 }
+          });
+
+          slider.addEventListener('input', function(event) {
+              const currentValue = Number(event.target.value);
+              if (currentValue > previousValue) {
+                nextCommit();        
+              } else if (currentValue < previousValue) {
+                previousCommit();
+              }
+              previousValue = currentValue;
           });
   
           function buildHierarchy(nodes) {
@@ -491,6 +437,7 @@ function getWebviewContentVisualize(
             if (index < graphData.length - 1) {
                 index++;
                 updateGraph(graphData[index]);
+                document.getElementById("commitIndex").textContent = index + 1;
             } else {
                 g.selectAll("*").remove();
                 g.append("text").text("Processing Next Commit...")
@@ -500,6 +447,7 @@ function getWebviewContentVisualize(
                 .attr("dominant-baseline", "middle");
                 document.getElementById("nextCommit").disabled = true;
                 document.getElementById("previousCommit").disabled = true;
+                slider.disabled = true;
                 vscode.postMessage({ command: "fetch", index: graphData.length });
             }
           }
@@ -508,6 +456,7 @@ function getWebviewContentVisualize(
             if (index >= 0) {
               index--;
               updateGraph(graphData[index]);
+              document.getElementById("commitIndex").textContent = index + 1;
             }
           }
   
@@ -576,87 +525,7 @@ function getWebviewContentVisualize(
             });
           }
 
-          updateGraph(0); 
-
-
-          let previousIndex = 0;
-
-
-
-          const logs = ${logsData};
-          const range = document.getElementById("commitRange");
-          const commitIndex = document.getElementById("commitIndex");
-          const commitDetails = document.getElementById("commitDetails");
-
-          function updateCommitDisplay(index) {
-            const log = logs[index];
-            commitIndex.textContent = parseInt(index) + 1;
-
-            const fileList = log.files.map(file => \`<li>\${file}</li>\`).join("");
-
-            commitDetails.innerHTML = \`
-              <h2>\${log.message} <span class="hash">(\${log.hash})</span></h2>
-              <p><b>\${log.author}</b> — \${log.date}</p>
-              <h4>Files Changed:</h4>
-              <ul class="file-list">\${fileList}</ul>
-            \`;
-          }
-
-          range.addEventListener("input", (e) => {
-            updateCommitDisplay(e.target.value);
-            
-          });
-
-          range.addEventListener("input", (e) => {
-              const newIndex = parseInt(e.target.value);
-
-
-              const direction = newIndex > previousIndex ? "right" : "left";
-              
-              // Update previousIndex for next input
-              previousIndex = newIndex;
-              
-              index = newIndex;
-
-              if(direction === "right") {
-              
-                if (index < graphData.length - 1) {
-                  index++;
-                  updateGraph(graphData[index]);
-                } else {
-                    g.selectAll("*").remove();
-                    g.append("text").text("Processing Next Commit...")
-                    .attr("fill", "white").attr("font-size", "20px")
-                    .attr("x", width / 2).attr("y", height / 2)
-                    .attr("text-anchor", "middle").style("opacity", 0.5)
-                    .attr("dominant-baseline", "middle");
-                    vscode.postMessage({ command: "fetch", index: graphData.length });
-                }
-              
-              }
-
-              if(direction === "left") {
-          
-                if (index >= 0) {
-                  index--;
-                  updateGraph(graphData[index]);
-                }
-              
-              }
-              
-
-
-              updateCommitDisplay(index);
-              
-              updateHotspotChart(index);
-              
-
-          });
-
-
-          // Initialize
-          updateCommitDisplay(0);
-
+          updateGraph(graphData[index]); 
         </script>
       </body>
       </html>`;
