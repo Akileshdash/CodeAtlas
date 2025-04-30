@@ -70,6 +70,10 @@ export function registerVisualize(context: vscode.ExtensionContext) {
                 command: "updateGraph",
                 data: nextCommitData,
               });
+            } else {
+              panel.webview.postMessage({
+                command: "noUpdate",
+              });
             }
           }
         });
@@ -303,11 +307,19 @@ function getWebviewContentVisualize(
                 if (event.data.command === "updateGraph") {
                 graphData.push(event.data.data);
                 index = graphData.length - 1;
+                slider.value = index;
                 updateGraph(graphData[index]);
                 document.getElementById("commitIndex").textContent = index + 1;
                 document.getElementById("nextCommit").disabled = false;
                 document.getElementById("previousCommit").disabled = false;
                 slider.disabled = false;
+                }
+                if (event.data.command === "noUpdate") {
+                  index = graphData.length - 1;
+                  slider.value = index;
+                  updateGraph(graphData[index]);
+                  document.getElementById("commitIndex").textContent = index + 1;
+                  document.getElementById("previousCommit").disabled = false;
                 }
           });
 
